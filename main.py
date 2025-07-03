@@ -51,9 +51,11 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
     
     with open(f"{projects_dir}/{userID}/{data["name"]}/config.yaml", "w", encoding="utf-8") as f:
         project_config = {
+            "status": "work",
             "hidden_layer": 50,
             "epohs": 5,
             "learning_rate": 0.01,
+            "embedding_dim": 32,
             "intents": [],
             "entities": [],
             "token": token_urlsafe(32)
@@ -65,6 +67,7 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
 
     
     return {"success": "good"}
+
 
 @app.post("/update_dataset")
 def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="userID")):
@@ -84,8 +87,9 @@ def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="use
 
     return {"success": "good"}
 
+
 @app.get("/start_education")
-def start_education(userID: str = Header("admin", alias="userID")):
+def start_education(userID: str = Header("admin", alias="userID"), project: str = Header("admin", alias="project")):
     ...
 
 

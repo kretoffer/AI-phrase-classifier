@@ -18,11 +18,3 @@ def tokenize(text, vocab, max_len=32):
     token_ids = [vocab.get(word, 0) for word in tokens] #0 — для неизвестных слов
     token_ids = token_ids[:max_len] + [0] * max(0, max_len - len(token_ids)) #паддинг и обрезка
     return token_ids
-
-if __name__ == "__main__":
-    custom_vocab = ["привет", "как", "дела", "погода", "сегодня", "отличная"]
-    word2idx = get_word2idx(custom_vocab)
-
-    text = "привет как погода"
-    tokens = tokenize(text, word2idx)
-    print(tokens)
