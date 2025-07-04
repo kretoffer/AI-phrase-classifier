@@ -8,6 +8,8 @@ import json
 
 from config import projects_dir
 
+from src.start_education import start_educate
+
 
 app = FastAPI()
 
@@ -89,8 +91,9 @@ def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="use
 
 
 @app.get("/start_education")
-def start_education(userID: str = Header("admin", alias="userID"), project: str = Header("admin", alias="project")):
-    ...
+def start_education(userID: str = Header("admin", alias="userID"), project: str = Header("test", alias="project")):
+    start_educate(f"{projects_dir}/{userID}/{project}")
+    return {"success": "good"}
 
 
 @app.post("/create_intent")
