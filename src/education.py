@@ -14,7 +14,7 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
     learning_rate = 0.01
 
     for epoch in range(epochs):
-        print(f"Epoch: {epoch+1}")
+        print(f"Epoch {epoch+1}")
 
         for input_neurons, classification, tokens in data:
             input_neurons = np.reshape(input_neurons, (-1, 1))
@@ -25,7 +25,7 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
             output_raw = bias_hidden_to_output + weights_hidden_to_output @ hidden
             output = 1 / (1 + np.exp(-output_raw)) #sigmoid
 
-            e_loss += 1 / len(output) * np.sum((output - classification) ** 2, axis=0)
+            e_loss += float(1 / len(output) * np.sum((output - classification) ** 2, axis=0))
             e_correct += int(np.argmax(output) == np.argmax(classification))
 
             #learning
@@ -45,9 +45,10 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
             for i, token in enumerate(tokens):
                 embedding_matrix[token] -= learning_rate * (grad_input[i] / len(tokens))
 
-
-        # print(f"Loss {(e_loss / len(data)) * 100}%")
-        # print(f"Correct {(e_correct / len(data)) * 100}%")
+        print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
+        print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
+        e_loss = 0
+        e_correct = 0
     
     np.savez(f"{project_path}/classifier.npz", 
              weights_input_to_hidden=weights_input_to_hidden,
