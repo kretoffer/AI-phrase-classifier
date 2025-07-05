@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Body, Header, Query
 
-from typing import Optional, Iterable, List
+from typing import Iterable
 import os
 import yaml
 from secrets import token_urlsafe
@@ -9,6 +9,7 @@ import json
 from config import projects_dir
 
 from src.start_education import start_educate
+from src.classifier import classificate
 
 
 app = FastAPI()
@@ -143,3 +144,14 @@ def about_me(userID: str = Header("admin", alias="userID")):
         user_data = yaml.load(f, Loader=yaml.SafeLoader)
     
     return user_data
+
+@app.get("/message/{userID}/{project}")
+def classificate_hand(userID, project, question:str = Query("Что такое AI-classifier", alias="q")):
+    if resp := validate_request_get(userID):
+        return resp
+    
+    if not os.path.exists(projects_dir+"/"+str(userID)+"/"+str(project)):
+        return {"error": "no such project exists"}
+
+    intent = classificate(f"{projects_dir}/{userID}/{project}", question)
+    return {"intent": intent}
