@@ -39,4 +39,4 @@ def start_educate(path_to_project: str):
         label[intents.index(el["classification"])] = 1.0
         data.append((emb, label, tokens))
 
-    educate(data, embedding_matrix, config["embedding_dim"]**2, config["hidden_layer"], len(config["intents"]), path_to_project) # type: ignore
+    educate(data, embedding_matrix, config["embedding_dim"]**2, config["hidden_layer"], len(config["intents"]), path_to_project, config["activation_method"]) # type: ignore

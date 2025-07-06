@@ -4,6 +4,7 @@ import yaml
 
 from src.tokinizator import tokenize
 from src.embedding import embedding
+from src.neuron_activation import activate
 
 def classificate(project_path: str, message: str):
 
@@ -20,6 +21,10 @@ def classificate(project_path: str, message: str):
 
     embedding_matrix = model["embedding_matrix"]
 
+    with open(f"{project_path}/config.yaml") as f:
+        project_data = yaml.load(f, Loader=yaml.SafeLoader)
+
+    activate_method = project_data["activation_method"]
 
     tokens = tokenize(message, vocab)
     emb = embedding(embedding_matrix, tokens)
@@ -27,14 +32,12 @@ def classificate(project_path: str, message: str):
     input_neurons = np.reshape(emb, (-1, 1))
 
     hidden_raw = bias_input_to_hidden + weights_input_to_hidden @ input_neurons
-    hidden = 1 / (1 + np.exp(-hidden_raw)) #sigmoid
+    hidden = activate(hidden_raw, activate_method)
     output_raw = bias_hidden_to_output + weights_hidden_to_output @ hidden
 
-    output = list(1 / (1 + np.exp(-output_raw))) #sigmoid
+    output = list(activate(output_raw, activate_method))
 
     intent_index = output.index(max(output))
-    with open(f"{project_path}/config.yaml") as f:
-        project_data = yaml.load(f, Loader=yaml.SafeLoader)
 
     intent = project_data["intents"][intent_index]
     return intent

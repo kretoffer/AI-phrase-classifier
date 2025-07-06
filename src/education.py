@@ -1,14 +1,16 @@
 import numpy as np
 
+from src.neuron_activation import activate
 
-def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path):
+
+def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method):
     weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
     weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
 
     bias_input_to_hidden = np.zeros((hidden_layer, 1))
     bias_hidden_to_output = np.zeros((output_layer, 1))
 
-    epochs = 5
+    epochs = 5000
     e_loss = 0
     e_correct = 0
     learning_rate = 0.01
@@ -20,10 +22,10 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
             input_neurons = np.reshape(input_neurons, (-1, 1))
 
             hidden_raw = bias_input_to_hidden + weights_input_to_hidden @ input_neurons
-            hidden = 1 / (1 + np.exp(-hidden_raw)) #sigmoid
+            hidden = activate(hidden_raw, activate_method)
 
             output_raw = bias_hidden_to_output + weights_hidden_to_output @ hidden
-            output = 1 / (1 + np.exp(-output_raw)) #sigmoid
+            output = activate(output_raw, activate_method)
 
             e_loss += float(1 / len(output) * np.sum((output - classification) ** 2, axis=0))
             e_correct += int(np.argmax(output) == np.argmax(classification))

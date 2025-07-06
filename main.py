@@ -61,7 +61,8 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
             "embedding_dim": 32,
             "intents": [],
             "entities": [],
-            "token": token_urlsafe(32)
+            "token": token_urlsafe(32),
+            "activation_method": "sigmoid"
         }
         yaml.dump(project_config, f, allow_unicode=True, sort_keys=False)
 
