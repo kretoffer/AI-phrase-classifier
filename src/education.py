@@ -3,14 +3,13 @@ import numpy as np
 from src.neuron_activation import activate
 
 
-def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method):
+def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs):
     weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
     weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
 
     bias_input_to_hidden = np.zeros((hidden_layer, 1))
     bias_hidden_to_output = np.zeros((output_layer, 1))
 
-    epochs = 5000
     e_loss = 0
     e_correct = 0
     learning_rate = 0.01

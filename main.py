@@ -6,13 +6,17 @@ import yaml
 from secrets import token_urlsafe
 import json
 
-from config import projects_dir
+from config import projects_dir, projects_dir_without_system_dir, more_then_one_user
 
 from src.start_education import start_educate
 from src.classifier import classificate
 
 
 app = FastAPI()
+
+if projects_dir_without_system_dir:
+    parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
+    projects_dir = f"{parent_dir}/{projects_dir}"
 
 if not os.path.exists(projects_dir):
     os.makedirs(projects_dir)
@@ -56,7 +60,7 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
         project_config = {
             "status": "work",
             "hidden_layer": 50,
-            "epohs": 5,
+            "epochs": 5,
             "learning_rate": 0.01,
             "embedding_dim": 32,
             "intents": [],
@@ -145,6 +149,29 @@ def about_me(userID: str = Header("admin", alias="userID")):
         user_data = yaml.load(f, Loader=yaml.SafeLoader)
     
     return user_data
+
+
+@app.get("/reg_user")
+def new_user(userID: str = Query("admin", alias="userID"), password: str = Query("admin", alias="password")):
+    if not more_then_one_user:
+        only_folders = [f for f in os.listdir(projects_dir) if os.path.isdir(os.path.join(projects_dir, f))]
+        if len(only_folders) >= 1:
+            return {"error": "user already created, to create more than one user set it up in the system"}
+        
+    if os.path.exists(f"{projects_dir}/{userID}"):
+        return {"error": "user with this name alredy created"}
+    
+    os.makedirs(f"{projects_dir}/{userID}")
+    with open(f"{projects_dir}/{userID}/user.yaml", "w") as f:
+        user_data = {
+            "name": userID,
+            "password": password,
+            "projects": []
+        }
+        yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
+
+    return {"success": "good"}
+
 
 @app.get("/message/{userID}/{project}")
 def classificate_hand(userID, project, question:str = Query("Что такое AI-classifier", alias="q")):
