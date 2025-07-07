@@ -1,6 +1,14 @@
 from fastapi import FastAPI, Body, Header, Query
+from fastapi.responses import RedirectResponse, HTMLResponse
 
-from typing import Iterable
+from fastui import FastUI, prebuilt_html, AnyComponent
+from fastui import components as c
+from fastui.components.display import DisplayLookup
+from fastui.events import GoToEvent, BackEvent
+
+from pydantic import BaseModel, Field
+
+from typing import Iterable, Literal, List
 import os
 import yaml
 from secrets import token_urlsafe
@@ -12,6 +20,7 @@ from src.start_education import start_educate
 from src.classifier import classificate
 
 
+c.Page.model_rebuild()
 app = FastAPI()
 
 if projects_dir_without_system_dir:
@@ -21,6 +30,16 @@ if projects_dir_without_system_dir:
 if not os.path.exists(projects_dir):
     os.makedirs(projects_dir)
 
+userID = "admin"
+if not os.path.exists(f"{projects_dir}/{userID}"):
+    os.makedirs(f"{projects_dir}/{userID}")
+    with open(f"{projects_dir}/{userID}/user.yaml", "w") as f:
+        user_data = {
+            "name": userID,
+            "password": "admin",
+            "projects": []
+        }
+        yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
 
 def validate_request_post(userID, data: dict, elements_in_data: Iterable):
     if not userID:
@@ -58,6 +77,7 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
     
     with open(f"{projects_dir}/{userID}/{data["name"]}/config.yaml", "w", encoding="utf-8") as f:
         project_config = {
+            "name": data["name"],
             "status": "work",
             "hidden_layer": 50,
             "epochs": 5,
@@ -183,3 +203,69 @@ def classificate_hand(userID, project, question:str = Query("Что такое A
 
     intent = classificate(f"{projects_dir}/{userID}/{project}", question)
     return {"intent": intent}
+
+#WEB INTERFACE
+
+@app.get("/")
+def main_rout():
+    return RedirectResponse(url="/web/")
+
+class Project(BaseModel):
+    name: str
+    status: Literal["work", "educated", "off", "error"]
+    hidden_layer: int = Field(50, gt=0)
+    epochs: int = Field(0, gt=-1)
+    learning_rate: float = Field(0.01, gt=0)
+    embedding_dim: int = Field(32, gt=0)
+    intents: List[str]
+    activation_method: Literal["sigmoid"]
+    entities: List[str]
+    token: str
+
+@app.get("/api/web/", response_model=FastUI, response_model_exclude_none=True)
+def main_web():
+    projects = [f for f in os.listdir(f"{projects_dir}/admin") if os.path.isdir(os.path.join(f"{projects_dir}/admin", f))]
+    projects = [Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{el}/config.yaml", "r"), Loader=yaml.SafeLoader)) for el in projects]
+
+    return [
+        c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Projects", level=1),    # type: ignore
+                c.Table(
+                    data=projects,
+                    columns=[
+                        DisplayLookup(field="name", on_click=GoToEvent(url="/project/{name}")),
+                        DisplayLookup(field="status")
+                    ]
+                )
+            ]
+        )
+    ]
+
+@app.get("/api/project/{name}", response_model=FastUI, response_model_exclude_none=True)
+def project_page(name: str):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+
+    return [
+        c.Page(
+            components=[ # type: ignore
+                c.Heading(text=project.name, level=1),
+                c.Link(components=[c.Text(text='Back')], on_click=BackEvent()),
+                c.Details(data=project),
+            ]
+        ),
+    ]
+
+#END OF FILE
+
+@app.get('/web/{path:path}')
+async def html_landing() -> HTMLResponse:
+    """Simple HTML page which serves the React app, comes last as it matches all paths."""
+    return HTMLResponse(prebuilt_html(title='classifier web'))
