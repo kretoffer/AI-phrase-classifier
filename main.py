@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Body, Header, Query
+from fastapi import FastAPI, Body, Header, Query, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 
 from fastui import FastUI, prebuilt_html, AnyComponent
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent, BackEvent, PageEvent
+from fastui.forms import fastui_form
 
 from pydantic import BaseModel, Field
 
-from typing import Iterable, Literal, List, Optional
+from typing import Annotated, Iterable, Literal, List, Optional
 import os
 import yaml
 import json
@@ -22,7 +23,28 @@ from src.classifier import classificate
 c.Page.model_rebuild()
 c.ModelForm.model_rebuild()
 c.Form.model_rebuild()
+
 app = FastAPI()
+
+class Project(BaseModel):
+    name: str
+    status: Literal["work", "educated", "off", "error"]
+    hidden_layer: int = Field(50, gt=0)
+    epochs: int = Field(0, gt=-1)
+    learning_rate: float = Field(0.01, gt=0)
+    embedding_dim: int = Field(32, gt=0)
+    intents: List[str]
+    activation_method: Literal["sigmoid"]
+    entities: List[str]
+    token: str
+
+class EditForm(BaseModel):
+    #name: Optional[str] = Field("test", description="name of the project", title="Project name")
+    hidden_layer: int = Field(50, gt=0, title="hidden neurouns", description="the count of neurons in hidden layer")
+    epochs: int = Field(0, title="epochs", description="try 0 to auto set")
+    learning_rate: float = Field(0.01, gt=0)
+    embedding_dim: int = Field(32)
+    activation_method: Literal["sigmoid"] = "sigmoid"
 
 if projects_dir_without_system_dir:
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
@@ -116,84 +138,53 @@ def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="use
     return {"success": "good"}
 
 
-@app.get("/start_education")
-def start_education(userID: str = Header("admin", alias="userID"), project: str = Header("test", alias="project")):
-    start_educate(f"{projects_dir}/{userID}/{project}")
+@app.get("/start_education/{name}", tags=["api"])
+def start_education(name):
+    start_educate(f"{projects_dir}/admin/{name}")
     return {"success": "good"}
 
 
-@app.post("/create_intent")
-def create_intent(data: dict = Body(), userID: str = Header("admin", alias="userID")):
-    if resp := validate_request_post(userID, data, ("project", "intents",)):
-        return resp
-    
-    if not os.path.exists(projects_dir+"/"+userID+"/"+str(data["project"])):
+@app.post("/api/update-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/{userID}/{data["project"]}/config.yaml", "r+", encoding="utf-8") as f:
-        project_data = yaml.safe_load(f)
-        project_data["intents"].extend(data["intents"])
+    with open(f"{projects_dir}/admin/{name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        project = project.model_copy(update=form.model_dump())
         f.seek(0)
         f.truncate()
-        project_data["intents"] = list(set(project_data["intents"]))
-        yaml.dump(project_data, f, allow_unicode=True, sort_keys=False)
-
-    return {"success": "good"}
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
-@app.post("/create_entity")
-def create_entity(data: dict = Body(), userID: str = Header("admin", alias="userID")):
-    if resp := validate_request_post(userID, data, ("project", "entities",)):
-        return resp
-    
-    if not os.path.exists(projects_dir+"/"+str(userID)+"/"+str(data["project"])):
+
+@app.post("/api/add-intent-entity/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alias="intent-name"), entity_name: Optional[str] = Form(None, alias="entity-name")):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/{userID}/{data["project"]}/config.yaml", "r+", encoding="utf-8") as f:
-        project_data = yaml.safe_load(f)
-        project_data["entities"].extend(data["entities"])
+    print(intent_name, entity_name)
+    
+    with open(f"{projects_dir}/admin/{name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+
+        if intent_name:
+            project.intents.append(intent_name)
+        if entity_name:
+            project.entities.append(entity_name)
+
         f.seek(0)
         f.truncate()
-        project_data["entities"] = list(set(project_data["entities"]))
-        yaml.dump(project_data, f, allow_unicode=True, sort_keys=False)
-
-    return {"success": "good"}
-
-
-@app.get("/about_me")
-def about_me(userID: str = Header("admin", alias="userID")):
-    if resp := validate_request_get(userID):
-        return resp
-
-    with open(f"{projects_dir}/{userID}/user.yaml") as f:
-        user_data = yaml.load(f, Loader=yaml.SafeLoader)
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
-    return user_data
+    return [
+        c.FireEvent(event=PageEvent(name="add-intent-modal", clear=True)),
+        c.FireEvent(event=PageEvent(name="add-entity-modal", clear=True))
+    ]
 
 
-@app.get("/reg_user")
-def new_user(userID: str = Query("admin", alias="userID"), password: str = Query("admin", alias="password")):
-    if not more_then_one_user:
-        only_folders = [f for f in os.listdir(projects_dir) if os.path.isdir(os.path.join(projects_dir, f))]
-        if len(only_folders) >= 1:
-            return {"error": "user already created, to create more than one user set it up in the system"}
-        
-    if os.path.exists(f"{projects_dir}/{userID}"):
-        return {"error": "user with this name alredy created"}
-    
-    os.makedirs(f"{projects_dir}/{userID}")
-    with open(f"{projects_dir}/{userID}/user.yaml", "w") as f:
-        user_data = {
-            "name": userID,
-            "password": password,
-            "projects": []
-        }
-        yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
-
-    return {"success": "good"}
-
-
-@app.get("/message/{userID}/{project}")
+@app.get("/message/{userID}/{project}", tags=["api"])
 def classificate_hand(userID, project, question:str = Query("Что такое AI-classifier", alias="q")):
     if resp := validate_request_get(userID):
         return resp
@@ -206,23 +197,11 @@ def classificate_hand(userID, project, question:str = Query("Что такое A
 
 #WEB INTERFACE
 
-@app.get("/")
+@app.get("/", tags=["fast ui interface"])
 def main_rout():
     return RedirectResponse(url="/web/")
 
-class Project(BaseModel):
-    name: str
-    status: Literal["work", "educated", "off", "error"]
-    hidden_layer: int = Field(50, gt=0)
-    epochs: int = Field(0, gt=-1)
-    learning_rate: float = Field(0.01, gt=0)
-    embedding_dim: int = Field(32, gt=0)
-    intents: List[str]
-    activation_method: Literal["sigmoid"]
-    entities: List[str]
-    token: str
-
-@app.get("/api/web/", response_model=FastUI, response_model_exclude_none=True)
+@app.get("/api/web/", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def main_web():
     projects = [f for f in os.listdir(f"{projects_dir}/admin") if os.path.isdir(os.path.join(f"{projects_dir}/admin", f))]
     projects = [Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{el}/config.yaml", "r"), Loader=yaml.SafeLoader)) for el in projects]
@@ -243,7 +222,7 @@ def main_web():
     ]
 
 
-@app.get("/api/web/project/{name}/edit", response_model=FastUI, response_model_exclude_none=True)
+@app.get("/api/web/project/{name}/edit", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_page(name: str):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return c.Page(
@@ -255,7 +234,7 @@ def edit_page(name: str):
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     
     class EditForm(BaseModel):
-        name: Optional[str] = Field(project.name, description="name of the project", title="Project name")
+        #name: Optional[str] = Field(project.name, description="name of the project", title="Project name")
         hidden_layer: int = Field(project.hidden_layer, gt=0, title="hidden neurouns", description="the count of neurons in hidden layer")
         epochs: int = Field(project.epochs, title="epochs", description="try 0 to auto set")
         learning_rate: float = Field(project.learning_rate, gt=0)
@@ -281,10 +260,10 @@ def edit_page(name: str):
                         c.Paragraph(text="Create a new intent or import prepared"),
                         c.Form(
                             form_fields=[
-                                c.FormFieldInput(name="name", title="Name of intent", required=True)
+                                c.FormFieldInput(name="intent-name", title="Name of intent", required=True)
                             ],
                             footer = [],
-                            submit_url="",
+                            submit_url=f"/api/add-intent-entity/{project.name}",
                             submit_trigger=PageEvent(name='add-intent-modal-submit')
                         )
                     ],
@@ -301,10 +280,10 @@ def edit_page(name: str):
                         c.Paragraph(text="Create a new entity"),
                         c.Form(
                             form_fields=[
-                                c.FormFieldInput(name="name", title="Name of entity", required=True)
+                                c.FormFieldInput(name="entity-name", title="Name of entity", required=True)
                             ],
                             footer = [],
-                            submit_url="",
+                            submit_url=f"/api/add-intent-entity/{project.name}",
                             submit_trigger=PageEvent(name='add-entity-modal-submit')
                         )
                     ],
@@ -318,7 +297,7 @@ def edit_page(name: str):
         ),
     ]
 
-@app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True)
+@app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def project_page(name: str):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return c.Page(
@@ -342,7 +321,7 @@ def project_page(name: str):
 
 #END OF FILE
 
-@app.get('/web/{path:path}')
+@app.get('/web/{path:path}', tags=["fast ui interface"])
 async def html_landing() -> HTMLResponse:
     """Simple HTML page which serves the React app, comes last as it matches all paths."""
     return HTMLResponse(prebuilt_html(title='classifier web'))
