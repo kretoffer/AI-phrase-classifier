@@ -4,14 +4,13 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastui import FastUI, prebuilt_html, AnyComponent
 from fastui import components as c
 from fastui.components.display import DisplayLookup
-from fastui.events import GoToEvent, BackEvent
+from fastui.events import GoToEvent, BackEvent, PageEvent
 
 from pydantic import BaseModel, Field
 
-from typing import Iterable, Literal, List
+from typing import Iterable, Literal, List, Optional
 import os
 import yaml
-from secrets import token_urlsafe
 import json
 
 from config import projects_dir, projects_dir_without_system_dir, more_then_one_user
@@ -21,6 +20,8 @@ from src.classifier import classificate
 
 
 c.Page.model_rebuild()
+c.ModelForm.model_rebuild()
+c.Form.model_rebuild()
 app = FastAPI()
 
 if projects_dir_without_system_dir:
@@ -85,7 +86,6 @@ def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID
             "embedding_dim": 32,
             "intents": [],
             "entities": [],
-            "token": token_urlsafe(32),
             "activation_method": "sigmoid"
         }
         yaml.dump(project_config, f, allow_unicode=True, sort_keys=False)
@@ -234,7 +234,7 @@ def main_web():
                 c.Table(
                     data=projects,
                     columns=[
-                        DisplayLookup(field="name", on_click=GoToEvent(url="/project/{name}")),
+                        DisplayLookup(field="name", on_click=GoToEvent(url="/web/project/{name}")),
                         DisplayLookup(field="status")
                     ]
                 )
@@ -242,7 +242,83 @@ def main_web():
         )
     ]
 
-@app.get("/api/project/{name}", response_model=FastUI, response_model_exclude_none=True)
+
+@app.get("/api/web/project/{name}/edit", response_model=FastUI, response_model_exclude_none=True)
+def edit_page(name: str):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    
+    class EditForm(BaseModel):
+        name: Optional[str] = Field(project.name, description="name of the project", title="Project name")
+        hidden_layer: int = Field(project.hidden_layer, gt=0, title="hidden neurouns", description="the count of neurons in hidden layer")
+        epochs: int = Field(project.epochs, title="epochs", description="try 0 to auto set")
+        learning_rate: float = Field(project.learning_rate, gt=0)
+        embedding_dim: int = Field(project.embedding_dim)
+        activation_method: Literal["sigmoid"] = project.activation_method
+
+    return [
+        c.Page(
+            components=[ # type: ignore
+                c.Heading(text=project.name, level=1),
+                c.ModelForm(model=EditForm, submit_url=f"/api/update-project/{project.name}", submit_trigger=PageEvent(name="submit-edits"), footer=[]),
+                c.Paragraph(text=""),
+                c.Button(text="Cancel", named_style="secondary", on_click=BackEvent()),
+                c.Text(text=" "),
+                c.Button(text="Save", on_click=PageEvent(name="submit-edits")),   
+                c.Paragraph(text=""),
+                c.Button(text="add intent", on_click=PageEvent(name="add-intent-modal")),
+                c.Text(text=" "),
+                c.Button(text="add entity", on_click=PageEvent(name="add-entity-modal")),
+                c.Modal(
+                    title = "Create a new intent",
+                    body = [
+                        c.Paragraph(text="Create a new intent or import prepared"),
+                        c.Form(
+                            form_fields=[
+                                c.FormFieldInput(name="name", title="Name of intent", required=True)
+                            ],
+                            footer = [],
+                            submit_url="",
+                            submit_trigger=PageEvent(name='add-intent-modal-submit')
+                        )
+                    ],
+                    footer = [
+                        c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-intent-modal', clear=True)),
+                        #c.Button(text="Import prepared", named_style='secondary'),
+                        c.Button(text='Submit', on_click=PageEvent(name='add-intent-modal-submit'))
+                    ],
+                    open_trigger = PageEvent(name="add-intent-modal")
+                ),
+                c.Modal(
+                    title = "Create a new entity",
+                    body = [
+                        c.Paragraph(text="Create a new entity"),
+                        c.Form(
+                            form_fields=[
+                                c.FormFieldInput(name="name", title="Name of entity", required=True)
+                            ],
+                            footer = [],
+                            submit_url="",
+                            submit_trigger=PageEvent(name='add-entity-modal-submit')
+                        )
+                    ],
+                    footer = [
+                        c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-entity-modal', clear=True)),
+                        c.Button(text='Submit', on_click=PageEvent(name='add-entity-modal-submit'))
+                    ],
+                    open_trigger = PageEvent(name="add-entity-modal")
+                )
+            ]
+        ),
+    ]
+
+@app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True)
 def project_page(name: str):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return c.Page(
@@ -259,6 +335,7 @@ def project_page(name: str):
                 c.Heading(text=project.name, level=1),
                 c.Link(components=[c.Text(text='Back')], on_click=BackEvent()),
                 c.Details(data=project),
+                c.Button(text="Edit", on_click=GoToEvent(url=f"/web/project/{project.name}/edit"))
             ]
         ),
     ]
