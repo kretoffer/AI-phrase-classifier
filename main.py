@@ -288,6 +288,7 @@ def edit_page(name: str):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return c.Page(
             components=[ # type: ignore
+                c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
                 c.Heading(text="Project not exists", level=2)
             ]
         )
@@ -310,51 +311,9 @@ def edit_page(name: str):
                 c.Paragraph(text=""),
                 c.Button(text="Cancel", named_style="secondary", on_click=GoToEvent(url=f"/web/project/{project.name}")),
                 c.Text(text=" "),
-                c.Button(text="Save", on_click=PageEvent(name="submit-edits")),   
-                c.Paragraph(text=""),
-                c.Button(text="add intent", on_click=PageEvent(name="add-intent-modal")),
-                c.Text(text=" "),
-                c.Button(text="add entity", on_click=PageEvent(name="add-entity-modal")),
+                c.Button(text="Save", on_click=PageEvent(name="submit-edits")),
                 c.Paragraph(text=""),
                 c.Button(text="Delete", named_style="warning", on_click=PageEvent(name="delete-project-modal")),
-                c.Modal(
-                    title = "Create a new intent",
-                    body = [
-                        c.Paragraph(text="Create a new intent or import prepared"),
-                        c.Form(
-                            form_fields=[
-                                c.FormFieldInput(name="intent-name", title="Name of intent", required=True)
-                            ],
-                            footer = [],
-                            submit_url=f"/api/add-intent-entity/{project.name}",
-                            submit_trigger=PageEvent(name='add-intent-modal-submit')
-                        )
-                    ],
-                    footer = [
-                        c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-intent-modal', clear=True)),
-                        #c.Button(text="Import prepared", named_style='secondary'),
-                        c.Button(text='Submit', on_click=PageEvent(name='add-intent-modal-submit'))
-                    ],
-                    open_trigger = PageEvent(name="add-intent-modal")
-                ),
-                c.Modal(
-                    title = "Create a new entity",
-                    body = [
-                        c.Form(
-                            form_fields=[
-                                c.FormFieldInput(name="entity-name", title="Name of entity", required=True)
-                            ],
-                            footer = [],
-                            submit_url=f"/api/add-intent-entity/{project.name}",
-                            submit_trigger=PageEvent(name='add-entity-modal-submit')
-                        )
-                    ],
-                    footer = [
-                        c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-entity-modal', clear=True)),
-                        c.Button(text='Submit', on_click=PageEvent(name='add-entity-modal-submit'))
-                    ],
-                    open_trigger = PageEvent(name="add-entity-modal")
-                ),
                 c.Modal(
                     title = "Delete project",
                     body = [
@@ -378,6 +337,96 @@ def edit_page(name: str):
         name=project.name
     )
 
+class SomeEntity(BaseModel):
+    name: str
+
+@app.get("/api/web/project/{name}/edit/intents", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
+def edit_intents_page(name):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    intents = [SomeEntity(name=el) for el in project.intents]
+
+    return template_edit_page(
+        c.Table(
+            data=intents,
+            columns=[
+                DisplayLookup(field="name")
+            ]
+        ),
+        c.Button(text="add intent", on_click=PageEvent(name="add-intent-modal")),
+        c.Modal(
+            title = "Create a new intent",
+            body = [
+                c.Paragraph(text="Create a new intent or import prepared"),
+                c.Form(
+                    form_fields=[
+                        c.FormFieldInput(name="intent-name", title="Name of intent", required=True)
+                    ],
+                    footer = [],
+                    submit_url=f"/api/add-intent-entity/{project.name}",
+                    submit_trigger=PageEvent(name='add-intent-modal-submit')
+                )
+            ],
+            footer = [
+                c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-intent-modal', clear=True)),
+                #c.Button(text="Import prepared", named_style='secondary'),
+                c.Button(text='Submit', on_click=PageEvent(name='add-intent-modal-submit'))
+            ],
+            open_trigger = PageEvent(name="add-intent-modal")
+        ),
+        name=project.name
+    )
+
+@app.get("/api/web/project/{name}/edit/entities", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
+def edit_entities_page(name):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    entities = [SomeEntity(name=el) for el in project.entities]
+
+    return template_edit_page(
+        c.Table(
+            data=entities,
+            columns=[
+                DisplayLookup(field="name")
+            ]
+        ),
+        c.Button(text="add entity", on_click=PageEvent(name="add-entity-modal")),
+        c.Modal(
+            title = "Create a new entity",
+            body = [
+                c.Form(
+                    form_fields=[
+                        c.FormFieldInput(name="entity-name", title="Name of entity", required=True)
+                    ],
+                    footer = [],
+                    submit_url=f"/api/add-intent-entity/{project.name}",
+                    submit_trigger=PageEvent(name='add-entity-modal-submit')
+                )
+            ],
+            footer = [
+                c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='add-entity-modal', clear=True)),
+                c.Button(text='Submit', on_click=PageEvent(name='add-entity-modal-submit'))
+            ],
+            open_trigger = PageEvent(name="add-entity-modal")
+        ),
+        name=project.name
+    )
+
+
 @app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def project_page(name: str):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
@@ -395,7 +444,7 @@ def project_page(name: str):
                 c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
                 c.Details(data=project),
                 c.Button(text="Edit", on_click=GoToEvent(url=f"/web/project/{project.name}/edit")),
-                c.Text(text=" "),
+                c.Paragraph(text=" "),
                 c.Button(text="educate", named_style="warning", on_click=PageEvent(name="educate")),
                 c.Form(
                     form_fields= [],
