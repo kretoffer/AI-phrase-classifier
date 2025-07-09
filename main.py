@@ -1,3 +1,4 @@
+from enum import Enum
 from fastapi import FastAPI, Body, Header, Query, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 
@@ -7,9 +8,9 @@ from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent, BackEvent, PageEvent
 from fastui.forms import fastui_form
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model, field_validator, validator
 
-from typing import Annotated, Iterable, Literal, List, Optional
+from typing import Annotated, Iterable, Literal, List, Optional, Dict
 import os
 import yaml
 import json
@@ -45,6 +46,11 @@ class EditForm(BaseModel):
     learning_rate: float = Field(0.01, gt=0)
     embedding_dim: int = Field(32)
     activation_method: Literal["sigmoid"] = "sigmoid"
+
+class FormAddToDatasetHand(BaseModel):
+    classification: str
+    slots: List[Dict[str, str]]
+    text: str
 
 if projects_dir_without_system_dir:
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
@@ -353,13 +359,15 @@ def edit_intents_page(name):
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     intents = [SomeEntity(name=el) for el in project.intents]
 
-    return template_edit_page(
-        c.Table(
+    table = c.Heading(text="So far, not one intent", level=2) if not intents else c.Table(
             data=intents,
             columns=[
                 DisplayLookup(field="name")
             ]
-        ),
+        )
+
+    return template_edit_page(
+        table,
         c.Button(text="add intent", on_click=PageEvent(name="add-intent-modal")),
         c.Modal(
             title = "Create a new intent",
@@ -384,6 +392,7 @@ def edit_intents_page(name):
         name=project.name
     )
 
+
 @app.get("/api/web/project/{name}/edit/entities", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_entities_page(name):
     if not os.path.exists(f"{projects_dir}/admin/{name}"):
@@ -397,13 +406,15 @@ def edit_entities_page(name):
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     entities = [SomeEntity(name=el) for el in project.entities]
 
-    return template_edit_page(
-        c.Table(
+    table = c.Heading(text="So far, not one entity", level=2) if not entities else c.Table(
             data=entities,
             columns=[
                 DisplayLookup(field="name")
             ]
-        ),
+        )
+
+    return template_edit_page(
+        table,
         c.Button(text="add entity", on_click=PageEvent(name="add-entity-modal")),
         c.Modal(
             title = "Create a new entity",
@@ -426,6 +437,47 @@ def edit_entities_page(name):
         name=project.name
     )
 
+
+@app.get("/api/web/project/{name}/edit/dataset", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
+def edit_dataset_page(name:str):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+
+    class FormAddToDatasetHand(BaseModel):
+        text: str = Field(title="Phrase")
+        classification: Enum("Intent", {v: v for v in project.intents}) # type: ignore
+
+    FormAddToDatasetHandFull = create_model(
+        "FormAddToDatasetHandFull",
+        __base__=FormAddToDatasetHand,
+        **{el: (Optional[str], Field(description=f"If your phrase does not contain an {el}, leave the field blank. Otherwise, enter the name of the entity")) for el in project.entities} # type: ignore
+    )
+            
+
+    return template_edit_page(
+        c.Heading(text="Add to dataset", level=2),
+        c.ModelForm(
+            submit_url="",
+            model=FormAddToDatasetHandFull
+        ),
+        c.Paragraph(text=""),
+        c.Heading(text="Add to dataset template", level=2),
+        c.Paragraph(text="You can only add template phrases through a file"),
+        c.Paragraph(text=""),
+        c.Heading(text="Add to dataset with file", level=2),
+        c.Form(
+            submit_url="",
+            form_fields=[
+                c.FormFieldFile(name="dataset", title="Upload dataset", required=True, multiple=True)
+            ]
+        ),
+        name=project.name
+    )
 
 @app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def project_page(name: str):
