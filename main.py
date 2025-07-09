@@ -13,6 +13,7 @@ from typing import Annotated, Iterable, Literal, List, Optional
 import os
 import yaml
 import json
+import shutil
 
 from config import projects_dir, projects_dir_without_system_dir, more_then_one_user
 
@@ -36,7 +37,6 @@ class Project(BaseModel):
     intents: List[str]
     activation_method: Literal["sigmoid"]
     entities: List[str]
-    token: str
 
 class EditForm(BaseModel):
     #name: Optional[str] = Field("test", description="name of the project", title="Project name")
@@ -80,43 +80,41 @@ def validate_request_get(userID):
         return {"error": "user not registered"}
 
 
-@app.post("/new_project")
-def new_project(data: dict = Body(), userID: str = Header("admin", alias="userID")):
-    if resp := validate_request_post(userID, data, ("name",)):
-        return resp
+@app.post("/api/new-project", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+def new_project(name:str = Form("test", alias="project-name")):
 
-    if os.path.exists(projects_dir+"/"+str(userID)+"/"+str(data["name"])):
+    if os.path.exists(f"{projects_dir}/admin/{name}"):
         return {"error": "a project with this name already exists"}
     
-    os.makedirs(projects_dir+"/"+str(userID)+"/"+str(data["name"]))
-    os.makedirs(f"{projects_dir}/{userID}/{data['name']}/models")
+    os.makedirs(f"{projects_dir}/admin/{name}")
+    os.makedirs(f"{projects_dir}/admin/{name}/models")
 
-    with open(f"{projects_dir}/{userID}/user.yaml", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/admin/user.yaml", "r+", encoding="utf-8") as f:
         user_data = yaml.safe_load(f)
-        user_data["projects"].append(str(data["name"]))
+        user_data["projects"].append(name)
         f.seek(0)
         f.truncate()
         yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
     
-    with open(f"{projects_dir}/{userID}/{data["name"]}/config.yaml", "w", encoding="utf-8") as f:
-        project_config = {
-            "name": data["name"],
-            "status": "work",
-            "hidden_layer": 50,
-            "epochs": 5,
-            "learning_rate": 0.01,
-            "embedding_dim": 32,
-            "intents": [],
-            "entities": [],
-            "activation_method": "sigmoid"
-        }
-        yaml.dump(project_config, f, allow_unicode=True, sort_keys=False)
+    with open(f"{projects_dir}/admin/{name}/config.yaml", "w", encoding="utf-8") as f:
+        project=Project(
+            name=name,
+            status="off",
+            hidden_layer=50,
+            epochs=0,
+            learning_rate=0.01,
+            embedding_dim=32,
+            intents=[],
+            activation_method="sigmoid",
+            entities=[]
+            )
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
 
-    with open(f"{projects_dir}/{userID}/{data["name"]}/dataset.json", "x", encoding="utf-8") as f:
+    with open(f"{projects_dir}/admin/{name}/dataset.json", "x", encoding="utf-8") as f:
         f.write('{"hand-data": [], "template-data": []}')
 
     
-    return {"success": "good"}
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
 
 @app.post("/update_dataset")
@@ -138,10 +136,10 @@ def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="use
     return {"success": "good"}
 
 
-@app.get("/start_education/{name}", tags=["api"])
+@app.get("/api/start_education/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def start_education(name):
     start_educate(f"{projects_dir}/admin/{name}")
-    return {"success": "good"}
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
 
 @app.post("/api/update-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
@@ -156,7 +154,19 @@ def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
         f.truncate()
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
-    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
+    return []
+
+@app.post("/api/delete-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+def delete_project(name: str, name_form: str = Form(None, alias="project-name")):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return {"error": "no such project exists"}
+    
+    if name != name_form:
+        return {"error", "name of project and name in input don't match"}
+    
+    shutil.rmtree(f"{projects_dir}/admin/{name}", ignore_errors=True)
+    
+    return [c.FireEvent(event=GoToEvent(url="/web/"))]
 
 
 @app.post("/api/add-intent-entity/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
@@ -196,6 +206,44 @@ def classificate_hand(userID, project, question:str = Query("Что такое A
     return {"intent": intent}
 
 #WEB INTERFACE
+def template_edit_page(*components: AnyComponent, name: Optional[str] = None) -> List[AnyComponent]:
+    return [
+        c.PageTitle(text= f"Edit {name}" if name else "classifier"),
+        c.Navbar(
+            title="Classifier Interface",
+            title_event=GoToEvent(url="/web/"),
+            start_links=[
+                c.Link(
+                    components=[c.Text(text="General")],
+                    on_click=GoToEvent(url=f"/web/project/{name}/edit"),
+                    active="startswith:/edit"
+                ),
+                c.Link(
+                    components=[c.Text(text="Intents")],
+                    on_click=GoToEvent(url=f"/web/project/{name}/edit/intents"),
+                    active="startswith:/intents"
+                ),
+                c.Link(
+                    components=[c.Text(text="Entities")],
+                    on_click=GoToEvent(url=f"/web/project/{name}/edit/entities"),
+                    active="startswith:/entities"
+                ),
+                c.Link(
+                    components=[c.Text(text="Dataset")],
+                    on_click=GoToEvent(url=f"/web/project/{name}/edit/dataset"),
+                    active="startswith:/dataset"
+                )
+            ]
+        ),
+        c.Page(components=[*components]),
+        c.Footer(
+            extra_text="AI phrase classifier by kretoffer",
+            links=[
+                c.Link(components=[c.Text(text="GitHub")], on_click=GoToEvent(url="https://github.com/kretoffer/ai-phrase-classifier"))
+            ]
+        )
+    ] # type: ignore
+
 
 @app.get("/", tags=["fast ui interface"])
 def main_rout():
@@ -216,6 +264,19 @@ def main_web():
                         DisplayLookup(field="name", on_click=GoToEvent(url="/web/project/{name}")),
                         DisplayLookup(field="status")
                     ]
+                ),
+                c.Button(text="New project", on_click=PageEvent(name="new-project-modal")),
+                c.Modal(
+                    title="New project",
+                    body=[
+                        c.Form(
+                            submit_url="/api/new-project",
+                            form_fields=[
+                                c.FormFieldInput(name="project-name", title="Name of new project", required=True)
+                            ]
+                        ) # type: ignore
+                    ],
+                    open_trigger=PageEvent(name="new-project-modal")
                 )
             ]
         )
@@ -241,19 +302,21 @@ def edit_page(name: str):
         embedding_dim: int = Field(project.embedding_dim)
         activation_method: Literal["sigmoid"] = project.activation_method
 
-    return [
+    return template_edit_page(
         c.Page(
             components=[ # type: ignore
                 c.Heading(text=project.name, level=1),
                 c.ModelForm(model=EditForm, submit_url=f"/api/update-project/{project.name}", submit_trigger=PageEvent(name="submit-edits"), footer=[]),
                 c.Paragraph(text=""),
-                c.Button(text="Cancel", named_style="secondary", on_click=BackEvent()),
+                c.Button(text="Cancel", named_style="secondary", on_click=GoToEvent(url=f"/web/project/{project.name}")),
                 c.Text(text=" "),
                 c.Button(text="Save", on_click=PageEvent(name="submit-edits")),   
                 c.Paragraph(text=""),
                 c.Button(text="add intent", on_click=PageEvent(name="add-intent-modal")),
                 c.Text(text=" "),
                 c.Button(text="add entity", on_click=PageEvent(name="add-entity-modal")),
+                c.Paragraph(text=""),
+                c.Button(text="Delete", named_style="warning", on_click=PageEvent(name="delete-project-modal")),
                 c.Modal(
                     title = "Create a new intent",
                     body = [
@@ -277,7 +340,6 @@ def edit_page(name: str):
                 c.Modal(
                     title = "Create a new entity",
                     body = [
-                        c.Paragraph(text="Create a new entity"),
                         c.Form(
                             form_fields=[
                                 c.FormFieldInput(name="entity-name", title="Name of entity", required=True)
@@ -292,10 +354,29 @@ def edit_page(name: str):
                         c.Button(text='Submit', on_click=PageEvent(name='add-entity-modal-submit'))
                     ],
                     open_trigger = PageEvent(name="add-entity-modal")
+                ),
+                c.Modal(
+                    title = "Delete project",
+                    body = [
+                        c.Form(
+                            form_fields=[
+                                c.FormFieldInput(name="project-name", title="Project name", required=True, description=f"to delete this project print project name ({project.name})")
+                            ],
+                            footer = [],
+                            submit_url=f"/api/delete-project/{project.name}",
+                            submit_trigger=PageEvent(name='delete-project-modal-submit')
+                        )
+                    ],
+                    footer = [
+                        c.Button(text='Cancel', named_style='secondary', on_click=PageEvent(name='delete-project-modal', clear=True)),
+                        c.Button(text='Delete', on_click=PageEvent(name='delete-project-modal-submit'), named_style="warning")
+                    ],
+                    open_trigger = PageEvent(name="delete-project-modal")
                 )
             ]
         ),
-    ]
+        name=project.name
+    )
 
 @app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def project_page(name: str):
@@ -305,16 +386,24 @@ def project_page(name: str):
                 c.Heading(text="Project not exists", level=2)
             ]
         )
-
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
 
     return [
         c.Page(
             components=[ # type: ignore
                 c.Heading(text=project.name, level=1),
-                c.Link(components=[c.Text(text='Back')], on_click=BackEvent()),
+                c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
                 c.Details(data=project),
-                c.Button(text="Edit", on_click=GoToEvent(url=f"/web/project/{project.name}/edit"))
+                c.Button(text="Edit", on_click=GoToEvent(url=f"/web/project/{project.name}/edit")),
+                c.Text(text=" "),
+                c.Button(text="educate", named_style="warning", on_click=PageEvent(name="educate")),
+                c.Form(
+                    form_fields= [],
+                    submit_url=f"/api/start_education/{name}",
+                    footer=[],
+                    method="GET",
+                    submit_trigger=PageEvent(name="educate")
+                )
             ]
         ),
     ]
