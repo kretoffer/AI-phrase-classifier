@@ -71,50 +71,17 @@ else:
 if not os.path.exists(projects_dir):
     os.makedirs(projects_dir)
 
-userID = "admin"
-if not os.path.exists(f"{projects_dir}/{userID}"):
-    os.makedirs(f"{projects_dir}/{userID}")
-    with open(f"{projects_dir}/{userID}/user.yaml", "w") as f:
-        user_data = {
-            "name": userID,
-            "password": "admin",
-            "projects": []
-        }
-        yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
-
-def validate_request_post(userID, data: dict, elements_in_data: Iterable):
-    if not userID:
-        return {"error": "user identifier not specified"}
-    if not all([el in data for el in elements_in_data]):
-        return {"error": "not all data specified"}
-    if not os.path.exists(projects_dir + "/" + str(userID)):
-        return {"error": "user not registered"}
-
-
-def validate_request_get(userID):
-    if not userID:
-        return {"error": "user identifier not specified"}
-    if not os.path.exists(projects_dir + "/" + str(userID)):
-        return {"error": "user not registered"}
-
 
 @app.post("/api/new-project", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def new_project(name:str = Form("test", alias="project-name")):
 
-    if os.path.exists(f"{projects_dir}/admin/{name}"):
+    if os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "a project with this name already exists"}
     
-    os.makedirs(f"{projects_dir}/admin/{name}")
-    os.makedirs(f"{projects_dir}/admin/{name}/models")
-
-    with open(f"{projects_dir}/admin/user.yaml", "r+", encoding="utf-8") as f:
-        user_data = yaml.safe_load(f)
-        user_data["projects"].append(name)
-        f.seek(0)
-        f.truncate()
-        yaml.dump(user_data, f, allow_unicode=True, sort_keys=False)
+    os.makedirs(f"{projects_dir}/{name}")
+    os.makedirs(f"{projects_dir}/{name}/models")
     
-    with open(f"{projects_dir}/admin/{name}/config.yaml", "w", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/config.yaml", "w", encoding="utf-8") as f:
         project=Project(
             name=name,
             status="off",
@@ -128,7 +95,7 @@ def new_project(name:str = Form("test", alias="project-name")):
             )
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
 
-    with open(f"{projects_dir}/admin/{name}/dataset.json", "x", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/dataset.json", "x", encoding="utf-8") as f:
         f.write('{"hand-data": [], "template-data": []}')
 
     
@@ -138,10 +105,10 @@ def new_project(name:str = Form("test", alias="project-name")):
 @app.post("/api/update-dataset/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset(name, request: Request):
     
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
 
         form = await request.form()
@@ -170,7 +137,7 @@ async def update_dataset(name, request: Request):
 @app.post("/api/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):
 
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
     if not files:
@@ -181,7 +148,7 @@ async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormF
         f = await file.read()
         data = json.loads(f)
     
-    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
         dataset["hand-data"].extend(data["hand-data"])
         dataset["template-data"].extend(data["template-data"])
@@ -195,12 +162,12 @@ async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormF
 @app.post("/api/replace-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(accept="application/json")] = Form(alias="dataset")):
 
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
     dataset = json.loads(await file.read())
     
-    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         f.seek(0)
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
@@ -210,29 +177,29 @@ async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(a
 @app.get("/api/download-dataset/{name}")
 def download_dataset(name: str):
     return FileResponse(
-        path=f"{projects_dir}/admin/{name}/dataset.json",
+        path=f"{projects_dir}/{name}/dataset.json",
         filename="dataset.json",
         media_type="application/json"
     )
 
 @app.get("/api/open-project-dir/{name}")
 def open_project_dir(name: str):
-    open_file_methods[platform.system()](f"{projects_dir}/admin/{name}")
+    open_file_methods[platform.system()](f"{projects_dir}/{name}")
     return []
 
 
 @app.get("/api/start_education/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def start_education(name):
-    start_educate(f"{projects_dir}/admin/{name}")
+    start_educate(f"{projects_dir}/{name}")
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
 
 @app.post("/api/update-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
 def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/admin/{name}/config.yaml", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
         project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
         project = project.model_copy(update=form.model_dump())
         f.seek(0)
@@ -243,25 +210,25 @@ def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
 
 @app.post("/api/delete-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
 def delete_project(name: str, name_form: str = Form(None, alias="project-name")):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
     if name != name_form:
         return {"error", "name of project and name in input don't match"}
     
-    shutil.rmtree(f"{projects_dir}/admin/{name}", ignore_errors=True)
+    shutil.rmtree(f"{projects_dir}/{name}", ignore_errors=True)
     
     return [c.FireEvent(event=GoToEvent(url="/web/"))]
 
 
 @app.post("/api/add-intent-entity/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
 def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alias="intent-name"), entity_name: Optional[str] = Form(None, alias="entity-name")):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
     print(intent_name, entity_name)
     
-    with open(f"{projects_dir}/admin/{name}/config.yaml", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
         project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
 
         if intent_name:
@@ -279,15 +246,13 @@ def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alia
     ]
 
 
-@app.get("/message/{userID}/{project}", tags=["api"])
-def classificate_hand(userID, project, question:str = Query("Что такое AI-classifier", alias="q")):
-    if resp := validate_request_get(userID):
-        return resp
+@app.get("/api/message/{project}", tags=["api"])
+def classificate_hand(project, question:str = Query("Что такое AI-classifier", alias="q")):
     
-    if not os.path.exists(projects_dir+"/"+str(userID)+"/"+str(project)):
+    if not os.path.exists(f"{projects_dir}/{project}"):
         return {"error": "no such project exists"}
 
-    intent = classificate(f"{projects_dir}/{userID}/{project}", question)
+    intent = classificate(f"{projects_dir}/{project}", question)
     return {"intent": intent}
 
 #WEB INTERFACE
@@ -341,20 +306,22 @@ def main_rout():
 
 @app.get("/api/web/", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def main_web():
-    projects = [f for f in os.listdir(f"{projects_dir}/admin") if os.path.isdir(os.path.join(f"{projects_dir}/admin", f))]
-    projects = [Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{el}/config.yaml", "r"), Loader=yaml.SafeLoader)) for el in projects]
+    projects = [f for f in os.listdir(projects_dir) if os.path.isdir(os.path.join(projects_dir, f))]
+    projects = [Project.model_validate(yaml.load(open(f"{projects_dir}/{el}/config.yaml", "r"), Loader=yaml.SafeLoader)) for el in projects]
 
-    return [
-        c.Page(
-            components=[ # type: ignore
-                c.Heading(text="Projects", level=1),    # type: ignore
-                c.Table(
+    table = c.Table(
                     data=projects,
                     columns=[
                         DisplayLookup(field="name", on_click=GoToEvent(url="/web/project/{name}")),
                         DisplayLookup(field="status")
                     ]
-                ),
+                ) if projects else c.Heading(text="So far, not one project", level=3)
+
+    return [
+        c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Projects", level=1),    # type: ignore
+                table,
                 c.Button(text="New project", on_click=PageEvent(name="new-project-modal")),
                 c.Modal(
                     title="New project",
@@ -375,7 +342,7 @@ def main_web():
 
 @app.get("/api/web/project/{name}/edit", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_page(name: str):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
@@ -383,7 +350,7 @@ def edit_page(name: str):
             ]
         )
 
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     
     class EditForm(BaseModel):
         #name: Optional[str] = Field(project.name, description="name of the project", title="Project name")
@@ -441,13 +408,13 @@ def edit_page(name: str):
 
 @app.get("/api/web/project/{name}/edit/dataset/view", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def view_dataset_page(name:str):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Heading(text="Project not exists", level=2)
             ]
         )
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
 
     class DatasetHand(BaseModel):
         text: str = Field(title="Phrase")
@@ -459,7 +426,7 @@ def view_dataset_page(name:str):
         **{el: (Optional[str], Field(None)) for el in project.entities} # type: ignore
     )
 
-    with open(f"{projects_dir}/admin/{name}/dataset.json", "r", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/dataset.json", "r", encoding="utf-8") as f:
         dataset = json.load(f)
 
     hand_data = []    
@@ -509,7 +476,7 @@ class SomeEntity(BaseModel):
 
 @app.get("/api/web/project/{name}/edit/intents", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_intents_page(name):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
@@ -517,7 +484,7 @@ def edit_intents_page(name):
             ]
         )
 
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     intents = [SomeEntity(name=el) for el in project.intents]
 
     table = c.Heading(text="So far, not one intent", level=2) if not intents else c.Table(
@@ -556,7 +523,7 @@ def edit_intents_page(name):
 
 @app.get("/api/web/project/{name}/edit/entities", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_entities_page(name):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Link(components=[c.Text(text='Back')], on_click=GoToEvent(url="/web/")),
@@ -564,7 +531,7 @@ def edit_entities_page(name):
             ]
         )
 
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
     entities = [SomeEntity(name=el) for el in project.entities]
 
     table = c.Heading(text="So far, not one entity", level=2) if not entities else c.Table(
@@ -601,13 +568,13 @@ def edit_entities_page(name):
 
 @app.get("/api/web/project/{name}/edit/dataset", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def edit_dataset_page(name:str):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Heading(text="Project not exists", level=2)
             ]
         )
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
 
     class FormAddToDatasetHand(BaseModel):
         text: str = Field(title="Phrase")
@@ -652,13 +619,13 @@ def edit_dataset_page(name:str):
 
 @app.get("/api/web/project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
 def project_page(name: str):
-    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+    if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
                 c.Heading(text="Project not exists", level=2)
             ]
         )
-    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
 
     return [
         c.Page(
