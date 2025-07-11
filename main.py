@@ -23,6 +23,7 @@ from config import projects_dir, projects_dir_without_system_dir, more_then_one_
 
 from src.start_education import start_educate
 from src.classifier import classificate
+from src.template_to_hand import template2hand
 
 open_file_methods = {
     "Windows": lambda path: subprocess.Popen(f'explorrer /select, "{path}"'),
@@ -300,22 +301,27 @@ def template_edit_page(*components: AnyComponent, name: Optional[str] = None) ->
                 c.Link(
                     components=[c.Text(text="General")],
                     on_click=GoToEvent(url=f"/web/project/{name}/edit"),
-                    active="startswith:/edit"
+                    active="endswith:/edit"
                 ),
                 c.Link(
                     components=[c.Text(text="Intents")],
                     on_click=GoToEvent(url=f"/web/project/{name}/edit/intents"),
-                    active="startswith:/intents"
+                    active="endswith:/intents"
                 ),
                 c.Link(
                     components=[c.Text(text="Entities")],
                     on_click=GoToEvent(url=f"/web/project/{name}/edit/entities"),
-                    active="startswith:/entities"
+                    active="endswith:/entities"
                 ),
                 c.Link(
                     components=[c.Text(text="Dataset")],
                     on_click=GoToEvent(url=f"/web/project/{name}/edit/dataset"),
-                    active="startswith:/dataset"
+                    active="endswith:/dataset"
+                ),
+                c.Link(
+                    components=[c.Text(text="View dataset")],
+                    on_click=GoToEvent(url=f"/web/project/{name}/edit/dataset/view"),
+                    active="endswith:/dataset/view"
                 )
             ]
         ),
@@ -432,6 +438,72 @@ def edit_page(name: str):
         name=project.name
     )
 
+
+@app.get("/api/web/project/{name}/edit/dataset/view", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
+def view_dataset_page(name:str):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return c.Page(
+            components=[ # type: ignore
+                c.Heading(text="Project not exists", level=2)
+            ]
+        )
+    project = Project.model_validate(yaml.load(open(f"{projects_dir}/admin/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
+
+    class DatasetHand(BaseModel):
+        text: str = Field(title="Phrase")
+        classification: Enum("Intent", {v: v for v in project.intents}) # type: ignore
+
+    DatasetHandFull = create_model(
+        "DatasetHandFull",
+        __base__=DatasetHand,
+        **{el: (Optional[str], Field(None)) for el in project.entities} # type: ignore
+    )
+
+    with open(f"{projects_dir}/admin/{name}/dataset.json", "r", encoding="utf-8") as f:
+        dataset = json.load(f)
+
+    hand_data = []    
+    for el in dataset["hand-data"]:
+        hand_data.append(DatasetHandFull(
+            text=el["text"],
+            classification=el["classification"],
+            **{slot["entity"]: slot["value"] for slot in el["slots"]}
+        ))
+
+    columns = [
+        DisplayLookup(field="text"),
+        DisplayLookup(field="classification")
+    ]
+
+    columns.extend([DisplayLookup(field=entity) for entity in project.entities])
+
+    template_dataset_hand = [template2hand(el) for el in dataset["template-data"]]
+    template_dataset=[]
+    for dataset in template_dataset_hand:
+        data = []
+        for el in dataset:
+            data.append(DatasetHandFull(
+                text=el["text"],
+                classification=el["classification"],
+                **{slot["entity"]: slot["value"] for slot in el["slots"]}
+            ))
+        template_dataset.append(data)
+
+    hand_data_table = c.Table(data=hand_data, columns=columns) if hand_data else c.Heading(text="So far, not one phrase", level=3)
+
+    template_data_tabels = [c.Table(data=data, columns=columns) for data in template_dataset]
+    if not template_data_tabels:
+        template_data_tabels = [c.Heading(text="You haven't added any phrase templates yet.", level=3)]
+
+    return template_edit_page(
+        c.Heading(text="Hand data in dataset"),
+        hand_data_table,
+        c.Heading(text="Template data in dataset"),
+        *template_data_tabels,
+        name=project.name
+    )
+
+
 class SomeEntity(BaseModel):
     name: str
 
@@ -546,14 +618,16 @@ def edit_dataset_page(name:str):
         __base__=FormAddToDatasetHand,
         **{el: (Optional[str], Field(description=f"If your phrase does not contain an {el}, leave the field blank. Otherwise, enter the name of the entity")) for el in project.entities} # type: ignore
     )
+
+    form = c.ModelForm(
+            submit_url=f"/api/update-dataset/{project.name}",
+            model=FormAddToDatasetHandFull
+        ) if project.intents else c.Heading(text="So far, not one inten. First add intents", level=3)
             
 
     return template_edit_page(
         c.Heading(text="Add to dataset", level=2),
-        c.ModelForm(
-            submit_url=f"/api/update-dataset/{project.name}",
-            model=FormAddToDatasetHandFull
-        ),
+        form,
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset template", level=2),
         c.Paragraph(text="You can only add template phrases through a file"),
