@@ -1,25 +1,34 @@
 from enum import Enum
-from fastapi import FastAPI, Body, Header, Query, Form
-from fastapi.responses import RedirectResponse, HTMLResponse
+import platform
+from fastapi import FastAPI, Body, Header, Query, Form, Request, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse
 
 from fastui import FastUI, prebuilt_html, AnyComponent
 from fastui import components as c
 from fastui.components.display import DisplayLookup
 from fastui.events import GoToEvent, BackEvent, PageEvent
-from fastui.forms import fastui_form
+from fastui.forms import fastui_form, FormFile
 
-from pydantic import BaseModel, Field, create_model, field_validator, validator
+from pydantic import BaseModel, Field, create_model
 
-from typing import Annotated, Iterable, Literal, List, Optional, Dict
+from typing import Annotated, Any, Iterable, Literal, List, Optional, Dict
 import os
 import yaml
 import json
 import shutil
+from uuid import uuid4
+import subprocess
 
 from config import projects_dir, projects_dir_without_system_dir, more_then_one_user
 
 from src.start_education import start_educate
 from src.classifier import classificate
+
+open_file_methods = {
+    "Windows": lambda path: subprocess.Popen(f'explorrer /select, "{path}"'),
+    "Darwin": lambda path: subprocess.run(["open", path]),
+    "Linux": lambda path: subprocess.run(["xdg-open", path])
+}
 
 
 c.Page.model_rebuild()
@@ -55,6 +64,8 @@ class FormAddToDatasetHand(BaseModel):
 if projects_dir_without_system_dir:
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
     projects_dir = f"{parent_dir}/{projects_dir}"
+else:
+    projects_dir = os.path.abspath(projects_dir)
 
 if not os.path.exists(projects_dir):
     os.makedirs(projects_dir)
@@ -123,15 +134,53 @@ def new_project(name:str = Form("test", alias="project-name")):
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
 
-@app.post("/update_dataset")
-def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="userID")):
-    if resp := validate_request_post(userID, data, ("project", "hand-data", "template-data")):
-        return resp
+@app.post("/api/update-dataset/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+async def update_dataset(name, request: Request):
     
-    if not os.path.exists(projects_dir+"/"+str(userID)+"/"+str(data["project"])):
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/{userID}/{data['project']}/dataset.json", "r+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
+        dataset = json.load(f)
+
+        form = await request.form()
+        data = {
+            "classification": form["classification"],
+            "text": form["text"],
+            "slots": []
+        }
+
+        for el in form:
+            if el in ("classification", "text"): continue
+            if not form[el]: continue
+            data["slots"].append({
+                "entity": el,
+                "value": str(form[el]).lower()
+            })
+
+        dataset["hand-data"].append(data)
+
+        f.seek(0)
+        f.truncate()
+        json.dump(dataset, f, ensure_ascii=False, indent=1)
+
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+
+@app.post("/api/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):
+
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return {"error": "no such project exists"}
+    
+    if not files:
+        return {"error": "no such files in form"}
+    
+    data = {}
+    for file in files:
+        f = await file.read()
+        data = json.loads(f)
+    
+    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
         dataset["hand-data"].extend(data["hand-data"])
         dataset["template-data"].extend(data["template-data"])
@@ -139,7 +188,36 @@ def update_dataset(data: dict = Body(), userID: str = Header("admin", alias="use
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return {"success": "good"}
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+
+
+@app.post("/api/replace-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(accept="application/json")] = Form(alias="dataset")):
+
+    if not os.path.exists(f"{projects_dir}/admin/{name}"):
+        return {"error": "no such project exists"}
+    
+    dataset = json.loads(await file.read())
+    
+    with open(f"{projects_dir}/admin/{name}/dataset.json", "r+", encoding="utf-8") as f:
+        f.seek(0)
+        f.truncate()
+        json.dump(dataset, f, ensure_ascii=False, indent=1)
+
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+
+@app.get("/api/download-dataset/{name}")
+def download_dataset(name: str):
+    return FileResponse(
+        path=f"{projects_dir}/admin/{name}/dataset.json",
+        filename="dataset.json",
+        media_type="application/json"
+    )
+
+@app.get("/api/open-project-dir/{name}")
+def open_project_dir(name: str):
+    open_file_methods[platform.system()](f"{projects_dir}/admin/{name}")
+    return []
 
 
 @app.get("/api/start_education/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
@@ -319,6 +397,17 @@ def edit_page(name: str):
                 c.Text(text=" "),
                 c.Button(text="Save", on_click=PageEvent(name="submit-edits")),
                 c.Paragraph(text=""),
+                c.Button(text="Download dataset", on_click=GoToEvent(url=f"/api/download-dataset/{project.name}", target="_blank")),
+                c.Paragraph(text=""),
+                c.Form(
+                    submit_url=f"/api/open-project-dir/{project.name}",
+                    form_fields=[],
+                    footer=[],
+                    submit_trigger=PageEvent(name="open-project-dir"),
+                    method="GET"
+                ),
+                c.Button(text="Open project folder", on_click=PageEvent(name="open-project-dir")),
+                c.Paragraph(text=""),
                 c.Button(text="Delete", named_style="warning", on_click=PageEvent(name="delete-project-modal")),
                 c.Modal(
                     title = "Delete project",
@@ -462,7 +551,7 @@ def edit_dataset_page(name:str):
     return template_edit_page(
         c.Heading(text="Add to dataset", level=2),
         c.ModelForm(
-            submit_url="",
+            submit_url=f"/api/update-dataset/{project.name}",
             model=FormAddToDatasetHandFull
         ),
         c.Paragraph(text=""),
@@ -471,9 +560,17 @@ def edit_dataset_page(name:str):
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset with file", level=2),
         c.Form(
-            submit_url="",
+            submit_url=f"/api/update-dataset-file/{project.name}",
             form_fields=[
-                c.FormFieldFile(name="dataset", title="Upload dataset", required=True, multiple=True)
+                c.FormFieldFile(name="dataset", title="Upload dataset", required=True, multiple=True, description="Uplad file in json format")
+            ]
+        ),
+        c.Paragraph(text=""),
+        c.Heading(text="Replace existing dataset with file", level=2),
+        c.Form(
+            submit_url=f"/api/replace-dataset-file/{project.name}",
+            form_fields=[
+                c.FormFieldFile(name="dataset", title="Upload dataset", required=True, multiple=False, description="Uplad file in json format")
             ]
         ),
         name=project.name
