@@ -24,6 +24,7 @@ from config import projects_dir, projects_dir_without_system_dir, more_then_one_
 from src.start_education import start_educate
 from src.classifier import classificate
 from src.template_to_hand import template2hand
+from src.parse_dataset import parse_dataset
 
 open_file_methods = {
     "Windows": lambda path: subprocess.Popen(f'explorrer /select, "{path}"'),
@@ -118,6 +119,13 @@ async def update_dataset(name, request: Request):
             "slots": []
         }
 
+        with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
+            project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+            project.intents, project.entities = parse_dataset(data, project)
+            f.seek(0)
+            f.truncate()
+            yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
+
         for el in form:
             if el in ("classification", "text"): continue
             if not form[el]: continue
@@ -146,7 +154,14 @@ async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormF
     data = {}
     for file in files:
         f = await file.read()
-        data = json.loads(f)
+        data.update(json.loads(f))
+
+    with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        project.intents, project.entities = parse_dataset(data, project)
+        f.seek(0)
+        f.truncate()
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
@@ -166,6 +181,16 @@ async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(a
         return {"error": "no such project exists"}
     
     dataset = json.loads(await file.read())
+    if "hand-data" not in dataset:
+        dataset["hand-data"] = []
+    if "template-data" not in dataset:
+        dataset["template-data"] = []
+    with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        project.intents, project.entities = parse_dataset(dataset, project)
+        f.seek(0)
+        f.truncate()
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         f.seek(0)
