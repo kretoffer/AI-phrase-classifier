@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from fastui import prebuilt_html, AnyComponent
 from fastui import components as c
+import uvicorn
 
 from src.api import router as api_router
 from src.ui import router as web_router
@@ -25,3 +26,7 @@ def main_rout():
 async def html_landing() -> HTMLResponse:
     """Simple HTML page which serves the React app, comes last as it matches all paths."""
     return HTMLResponse(prebuilt_html(title='classifier web'))
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8585, reload=True)
