@@ -1,7 +1,8 @@
-from src.vocab_from_input import get_vocab_from_hand_data, get_hand_data
-from src.embedding import generate_matrix, embedding
-from src.education import educate
-from src.tokinizator import tokenize
+from src.logic.vocab_from_input import get_vocab_from_hand_data, get_hand_data
+from src.logic.embedding import generate_matrix, embedding
+from src.logic.education import educate
+from src.logic.tokinizator import tokenize
+from src.logic.parse_dataset import parse_dataset
 
 import json
 import numpy as np
@@ -9,8 +10,9 @@ import os
 import yaml
 
 def start_educate(path_to_project: str):
-    with open(f"{path_to_project}/config.yaml", "r", encoding="utf-8") as f:
+    with open(f"{path_to_project}/config.yaml", "r+", encoding="utf-8") as f:
         config = yaml.safe_load(f)
+        
     intents = config["intents"]
 
     with open(f"{path_to_project}/dataset.json", 'r', encoding='utf-8') as file:

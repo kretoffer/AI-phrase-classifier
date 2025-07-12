@@ -2,9 +2,9 @@ import numpy as np
 import json
 import yaml
 
-from src.tokinizator import tokenize
-from src.embedding import embedding
-from src.neuron_activation import activate
+from src.logic.embedding import embedding
+from src.logic.neuron_activation import activate
+from src.logic.tokinizator import tokenize
 
 def classificate(project_path: str, message: str):
 

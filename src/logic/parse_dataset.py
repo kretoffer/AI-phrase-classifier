@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from src.vocab_from_input import get_hand_data
+from src.logic.vocab_from_input import get_hand_data
 
 
 

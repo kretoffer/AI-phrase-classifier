@@ -1,7 +1,5 @@
-import json
-
-from src.template_to_hand import template2hand
-from src.tokinizator import *
+from src.logic.template_to_hand import template2hand
+from src.logic.tokinizator import *
 
 def get_vocab_from_hand_data(data: dict):
     phrases = [el["text"] for el in data["hand-data"]]

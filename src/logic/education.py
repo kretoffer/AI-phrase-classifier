@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.neuron_activation import activate
+from src.logic.neuron_activation import activate
 
 
 def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs):
