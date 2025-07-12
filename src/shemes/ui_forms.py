@@ -1,4 +1,5 @@
 from typing import Dict, List, Literal
+from enum import Enum
 from pydantic import BaseModel, Field
 
 class EditForm(BaseModel):
@@ -7,7 +8,7 @@ class EditForm(BaseModel):
     epochs: int = Field(0, title="epochs", description="try 0 to auto set")
     learning_rate: float = Field(0.01, gt=0)
     embedding_dim: int = Field(32)
-    activation_method: Literal["sigmoid"] = "sigmoid"
+    activation_method: Literal["relu", "sigmoid", "tanh", "leaky relu", "softmax", "swish", "mish"] = Field("relu")
 
 class FormAddToDatasetHand(BaseModel):
     classification: str

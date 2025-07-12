@@ -10,7 +10,7 @@ class Project(BaseModel):
     learning_rate: float = Field(0.01, gt=0)
     embedding_dim: int = Field(32, gt=0)
     intents: List[str]
-    activation_method: Literal["sigmoid"]
+    activation_method: Literal["sigmoid", "relu", "tanh", "leaky relu", "softmax", "swish", "mish"]
     entities: List[str]
 
 class SomeEntity(BaseModel):

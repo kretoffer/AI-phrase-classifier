@@ -42,7 +42,7 @@ def new_project(name:str = Form("test", alias="project-name")):
             learning_rate=0.01,
             embedding_dim=32,
             intents=[],
-            activation_method="sigmoid",
+            activation_method="relu",
             entities=[]
             )
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)

@@ -77,7 +77,7 @@ def edit_page(name: str):
         epochs: int = Field(project.epochs, title="epochs", description="try 0 to auto set")
         learning_rate: float = Field(project.learning_rate, gt=0)
         embedding_dim: int = Field(project.embedding_dim)
-        activation_method: Literal["sigmoid"] = project.activation_method
+        activation_method: Literal["relu", "sigmoid", "tanh", "leaky relu", "softmax", "swish", "mish"] = Field(project.activation_method)
 
     return template_edit_page(
         c.Page(

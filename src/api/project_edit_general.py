@@ -29,7 +29,7 @@ def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
         f.truncate()
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
     
-    return []
+    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
 @router.post("/delete-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
 def delete_project(name: str, name_form: str = Form(None, alias="project-name")):
