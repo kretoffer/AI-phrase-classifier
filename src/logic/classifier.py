@@ -6,7 +6,7 @@ from src.logic.embedding import embedding
 from src.logic.neuron_activation import activate
 from src.logic.tokinizator import tokenize
 
-def classificate(project_path: str, message: str):
+def classificate(project_path: str, message: str, return_emb: bool = False):
 
     with open(f"{project_path}/vocab.json") as f:
         vocab = json.load(f)
@@ -40,4 +40,6 @@ def classificate(project_path: str, message: str):
     intent_index = output.index(max(output))
 
     intent = project_data["intents"][intent_index]
+    if return_emb:
+        return intent, emb
     return intent
