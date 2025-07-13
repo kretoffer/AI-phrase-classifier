@@ -3,7 +3,7 @@ import numpy as np
 from src.logic.neuron_activation import activate
 
 
-def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs):
+def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs):
     weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
     weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
 
@@ -14,6 +14,7 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
     e_correct = 0
     learning_rate = 0.01
 
+    print("Educate classifier")
     for epoch in range(epochs):
         print(f"Epoch {epoch+1}")
 
@@ -50,6 +51,8 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
         print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
         e_loss = 0
         e_correct = 0
+
+    print("Classifier was educated")
     
     np.savez(f"{project_path}/classifier.npz", 
              weights_input_to_hidden=weights_input_to_hidden,
@@ -57,3 +60,54 @@ def educate(data, embedding_matrix, input_layer, hidden_layer, output_layer, pro
              bias_input_to_hidden=bias_input_to_hidden,
              bias_hidden_to_output=bias_hidden_to_output,
              embedding_matrix=embedding_matrix)
+    
+def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs, entity: str, intent: str):
+    weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
+    weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
+
+    bias_input_to_hidden = np.zeros((hidden_layer, 1))
+    bias_hidden_to_output = np.zeros((output_layer, 1))
+
+    e_loss = 0
+    e_correct = 0
+    learning_rate = 0.01
+    
+    print(f"Educate {entity} extractor for {intent}")
+    for epoch in range(epochs):
+        print(f"Epoch {epoch+1}")
+
+        for input_neurons, classification in data:
+            input_neurons = np.reshape(input_neurons, (-1, 1))
+
+            hidden_raw = bias_input_to_hidden + weights_input_to_hidden @ input_neurons
+            hidden = activate(hidden_raw, activate_method)
+
+            output_raw = bias_hidden_to_output + weights_hidden_to_output @ hidden
+            output = activate(output_raw, activate_method)
+
+            e_loss += float(1 / len(output) * np.sum((output - classification) ** 2, axis=0))
+            e_correct += int(np.argmax(output) == np.argmax(classification))
+
+            #learning
+            #output layer
+            delta_output = output - classification
+            weights_hidden_to_output += -learning_rate * delta_output @ np.transpose(hidden)
+            bias_hidden_to_output += -learning_rate * delta_output
+
+            #hidden layer
+            delta_hidden = np.transpose(weights_hidden_to_output) @ delta_output * (hidden * (1 - hidden))
+            weights_input_to_hidden += -learning_rate * delta_hidden @ np.transpose(input_neurons)
+            bias_input_to_hidden += -learning_rate * delta_hidden
+
+        print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
+        print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
+        e_loss = 0
+        e_correct = 0
+
+    print(f"{entity} extractor for {intent} was educated")
+
+    np.savez(f"{project_path}/{intent}/{entity}.npz", 
+             weights_input_to_hidden=weights_input_to_hidden,
+             weights_hidden_to_output=weights_hidden_to_output,
+             bias_input_to_hidden=bias_input_to_hidden,
+             bias_hidden_to_output=bias_hidden_to_output)

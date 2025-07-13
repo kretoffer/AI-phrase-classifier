@@ -10,6 +10,8 @@ def get_vocab_from_hand_data(data: dict):
     return idx
 
 def get_hand_data(data):
+    if "template-data" not in data:
+        return data
     for template in data["template-data"]:
         data["hand-data"].extend(template2hand(template))
     del(data["template-data"])

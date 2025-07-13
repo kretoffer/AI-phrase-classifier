@@ -1,21 +1,30 @@
 from src.shemes import Project
 from src.logic.vocab_from_input import get_vocab_from_hand_data, get_hand_data
 from src.logic.embedding import generate_matrix, embedding
-from src.logic.education import educate
+from src.logic.education import educate_classifier, educate_entity_extractor
 from src.logic.tokinizator import tokenize
 from src.logic.parse_dataset import parse_dataset
+from src.logic.phrases_for_entity import phases_for_entity
+
+from config import projects_dir
 
 import json
 import numpy as np
 import os
 import yaml
+import pickle
 
 def start_educate(path_to_project: str):
     project = Project.model_validate(yaml.load(open(f"{path_to_project}/config.yaml", "r"), Loader=yaml.SafeLoader))
+    project.status = "educated"
 
     with open(f"{path_to_project}/dataset.json", 'r', encoding='utf-8') as file:
         dataset: dict = json.load(file)
     dataset = get_hand_data(dataset)
+
+    with open(f"{path_to_project}/config.yaml", "w", encoding="utf-8") as f:
+        project.intents, project.entities = parse_dataset(dataset, project)
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
 
     with open(f"{path_to_project}/vocab.json", "w", encoding="utf-8") as f:
         vocab = get_vocab_from_hand_data(dataset)
@@ -39,4 +48,43 @@ def start_educate(path_to_project: str):
         label[project.intents.index(el["classification"])] = 1.0
         data.append((emb, label, tokens))
 
-    educate(data, embedding_matrix, project.embedding_dim**2, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, project.epochs) # type: ignore
+    educate_classifier(data, embedding_matrix, project.embedding_dim*32, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, project.epochs) # type: ignore
+    
+    start_educate_extractors(project, dataset, embedding_matrix, vocab)
+
+    print(f"{project.name} was educated")
+    
+    project.status = "work"
+    with open(f"{path_to_project}/config.yaml", "w", encoding="utf-8") as f:
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)  
+
+
+def start_educate_extractors(project: Project, dataset, embedding_matrix, vocab):
+    phrases = phases_for_entity(dataset, project)  
+
+    for intent in project.intents:
+        if not os.path.exists(f"{projects_dir}/{project.name}/models/{intent}"):
+            os.makedirs(f"{projects_dir}/{project.name}/models/{intent}")
+        if not phrases["entities"][intent]:
+            continue
+        entities = phrases["entities"][intent]
+        for entity in entities:
+            values = []
+            data = []
+            for el in phrases[intent]:
+                values.append(el[entity])
+                data.append((el["text"], el[entity]))
+            values = list(set(values))
+            with open(f"{projects_dir}/{project.name}/models/{intent}/{entity}.pkl", "wb") as f:
+                pickle.dump(values, f)
+
+            entity_dataset = []
+            for el in data:
+                tokens = tokenize(el[0], vocab)
+                emb = embedding(embedding_matrix, tokens)
+                label = np.array([[0] for _ in range(0, len(values))])
+                label[values.index(el[1])] = 1.0
+                entity_dataset.append((emb, label))
+
+            educate_entity_extractor(entity_dataset, project.embedding_dim*32, project.hidden_layer, len(values), f"{projects_dir}/{project.name}/models", project.activation_method, project.epochs, entity, intent)
+            
