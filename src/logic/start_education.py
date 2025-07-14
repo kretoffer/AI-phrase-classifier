@@ -5,6 +5,7 @@ from src.logic.education import educate_classifier, educate_entity_extractor
 from src.logic.tokinizator import tokenize
 from src.logic.parse_dataset import parse_dataset
 from src.logic.phrases_for_entity import phases_for_entity
+from src.logic.auto_select_epochs import auto_select_epochs
 
 from config import projects_dir
 
@@ -48,7 +49,8 @@ def start_educate(path_to_project: str):
         label[project.intents.index(el["classification"])] = 1.0
         data.append((emb, label, tokens))
 
-    educate_classifier(data, embedding_matrix, project.embedding_dim*32, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, project.epochs) # type: ignore
+    epochs = project.epochs if project.epochs else auto_select_epochs(len(data), project.learning_rate)
+    educate_classifier(data, embedding_matrix, project.embedding_dim*32, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, epochs, project.learning_rate) # type: ignore
     
     start_educate_extractors(project, dataset, embedding_matrix, vocab)
 
@@ -85,6 +87,9 @@ def start_educate_extractors(project: Project, dataset, embedding_matrix, vocab)
                 label = np.array([[0] for _ in range(0, len(values))])
                 label[values.index(el[1])] = 1.0
                 entity_dataset.append((emb, label))
-
-            educate_entity_extractor(entity_dataset, project.embedding_dim*32, project.hidden_layer, len(values), f"{projects_dir}/{project.name}/models", project.activation_method, project.epochs, entity, intent)
+            
+            epochs = project.epochs if project.epochs else auto_select_epochs(len(entity_dataset), project.learning_rate)
+            if len(values) == 1:
+                epochs = 1
+            educate_entity_extractor(entity_dataset, project.embedding_dim*32, project.hidden_layer, len(values), f"{projects_dir}/{project.name}/models", project.activation_method, epochs, entity, intent, project.learning_rate)
             

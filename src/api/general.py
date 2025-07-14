@@ -37,7 +37,7 @@ def new_project(name:str = Form("test", alias="project-name")):
         project=Project(
             name=name,
             status="off",
-            hidden_layer=7500,
+            hidden_layer=50,
             epochs=0,
             learning_rate=0.01,
             embedding_dim=32,

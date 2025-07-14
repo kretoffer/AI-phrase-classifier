@@ -5,6 +5,8 @@ projects_dir = "AI-phrase-classifier-data"
 
 projects_dir_without_system_dir = True
 
+k = 3000
+
 
 if projects_dir_without_system_dir:
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))

@@ -3,7 +3,7 @@ import numpy as np
 from src.logic.neuron_activation import activate
 
 
-def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs):
+def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs, learning_rate: float):
     weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
     weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
 
@@ -12,7 +12,6 @@ def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output
 
     e_loss = 0
     e_correct = 0
-    learning_rate = 0.01
 
     print("Educate classifier")
     for epoch in range(epochs):
@@ -61,7 +60,7 @@ def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output
              bias_hidden_to_output=bias_hidden_to_output,
              embedding_matrix=embedding_matrix)
     
-def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs, entity: str, intent: str):
+def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, project_path, activate_method, epochs, entity: str, intent: str, learning_rate: float):
     weights_input_to_hidden = np.random.uniform(-0.5, 0.5, (hidden_layer, input_layer))
     weights_hidden_to_output = np.random.uniform(-0.5, 0.5, (output_layer, hidden_layer))
 
@@ -70,7 +69,6 @@ def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, proj
 
     e_loss = 0
     e_correct = 0
-    learning_rate = 0.01
     
     print(f"Educate {entity} extractor for {intent}")
     for epoch in range(epochs):
