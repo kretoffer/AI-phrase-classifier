@@ -6,6 +6,7 @@ from src.logic.tokinizator import tokenize
 from src.logic.parse_dataset import parse_dataset
 from src.logic.phrases_for_entity import phases_for_entity
 from src.logic.auto_select_epochs import auto_select_epochs
+from src.logic.optimize_dataset import optimize_dataset
 
 from config import projects_dir
 
@@ -41,6 +42,9 @@ def start_educate(path_to_project: str):
     #     #Тут должна быть логика добавления новых векторов для новых слов, так же и с словарем
     embedding_matrix = generate_matrix(len(vocab), project.embedding_dim)
 
+    phrases = phases_for_entity(dataset, project) 
+    dataset = optimize_dataset(phrases)
+
     data = []
     for el in dataset["hand-data"]:
         tokens = tokenize(el["text"], vocab)
@@ -49,10 +53,11 @@ def start_educate(path_to_project: str):
         label[project.intents.index(el["classification"])] = 1.0
         data.append((emb, label, tokens))
 
+
     epochs = project.epochs if project.epochs else auto_select_epochs(len(data), project.learning_rate)
     educate_classifier(data, embedding_matrix, project.embedding_dim*32, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, epochs, project.learning_rate) # type: ignore
     
-    start_educate_extractors(project, dataset, embedding_matrix, vocab)
+    start_educate_extractors(project, phrases, embedding_matrix, vocab)
 
     print(f"{project.name} was educated")
     
@@ -61,8 +66,7 @@ def start_educate(path_to_project: str):
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)  
 
 
-def start_educate_extractors(project: Project, dataset, embedding_matrix, vocab):
-    phrases = phases_for_entity(dataset, project)  
+def start_educate_extractors(project: Project, phrases: dict, embedding_matrix, vocab): 
 
     for intent in project.intents:
         if not os.path.exists(f"{projects_dir}/{project.name}/models/{intent}"):
