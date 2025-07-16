@@ -2,7 +2,8 @@ import json
 import os
 from typing import Annotated, List
 from uuid import uuid4
-from fastapi import APIRouter, Form, Request, UploadFile
+from fastapi import APIRouter, Form, UploadFile, Body
+from fastapi.responses import RedirectResponse
 from fastui import FastUI
 import yaml
 
@@ -13,12 +14,13 @@ from fastui.forms import FormFile
 from config import projects_dir
 
 from src.logic.parse_dataset import parse_dataset
-from src.shemes import Project
+from src.shemes import Project, UpdateDatasetFormData
 
 router = APIRouter()
 
 @router.post("/update-dataset/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
-async def update_dataset(name, request: Request):
+async def update_dataset(name, data: UpdateDatasetFormData):
+    body = data.model_dump()
     
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
@@ -26,13 +28,7 @@ async def update_dataset(name, request: Request):
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
 
-        form = await request.form()
-        data = {
-            "classification": form["classification"],
-            "text": form["text"],
-            "slots": []
-        }
-        data_hand = {"hand-data": [data], "template-data": []}
+        data_hand = {"hand-data": [body], "template-data": []}
 
         with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as conf:
             project = Project.model_validate(yaml.load(conf, Loader=yaml.SafeLoader))
@@ -41,21 +37,13 @@ async def update_dataset(name, request: Request):
             conf.truncate()
             yaml.dump(project.model_dump(), conf, allow_unicode=True, sort_keys=False)
 
-        for el in form:
-            if el in ("classification", "text"): continue
-            if not form[el]: continue
-            data["slots"].append({
-                "entity": el,
-                "value": str(form[el]).lower()
-            })
-
-        dataset["hand-data"].append(data)
+        dataset["hand-data"].append(body)
 
         f.seek(0)
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+    return RedirectResponse(url=f"/add_to_dataset/{name}", status_code=303)
 
 @router.post("/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):

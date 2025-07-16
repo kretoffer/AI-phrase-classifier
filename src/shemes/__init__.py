@@ -15,3 +15,14 @@ class Project(BaseModel):
 
 class SomeEntity(BaseModel):
     name: str
+
+class Slot(BaseModel):
+    start: int
+    end: int
+    entity: str
+    value: str
+
+class UpdateDatasetFormData(BaseModel):
+    text: str
+    classification: str
+    slots: List[Slot]
