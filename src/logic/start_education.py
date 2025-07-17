@@ -34,6 +34,15 @@ def start_educate(path_to_project: str):
 
         json.dump(data, f, ensure_ascii=False)
 
+    with open(f"{path_to_project}/sinonimz.json", "w+", encoding="utf-8") as f:
+        sinonimz = json.load(f)
+        for el in dataset["template-data"]:
+            for entity in el["entitys"]:
+                for elem in el["entitys"][entity]:
+                    sinonimz[elem["text"]] = elem["value"]
+        json.dump(sinonimz, f, ensure_ascii=False, indent=1)
+
+
     #TODO
     # if not os.path.exists(f"{path_to_project}/embedding.bin"):
     #     embedding_matrix = generate_matrix(len(vocab), 32) 

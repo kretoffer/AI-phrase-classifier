@@ -13,6 +13,7 @@ from enum import Enum
 from config import projects_dir
 from src.logic.template_to_hand import template2hand
 from src.shemes import Project, SomeEntity
+from src.logic.sinanimizator import sinanimizate
 
 router = APIRouter()
 
@@ -148,12 +149,17 @@ def view_dataset_page(name:str):
     with open(f"{projects_dir}/{name}/dataset.json", "r", encoding="utf-8") as f:
         dataset = json.load(f)
 
+    with open(f"{projects_dir}/{name}/sinonimz.json", "r", encoding="utf-8") as f:
+        sinonimz = json.load(f)
+
     hand_data = []    
     for el in dataset["hand-data"]:
+        text = el["text"]
+        text_split = text.split()
         hand_data.append(DatasetHandFull(
-            text=el["text"],
+            text=text,
             classification=el["classification"],
-            **{slot["entity"]: slot["value"] for slot in el["slots"]}
+            **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
         ))
 
     columns = [
@@ -168,10 +174,12 @@ def view_dataset_page(name:str):
     for dataset in template_dataset_hand:
         data = []
         for el in dataset:
+            text = el["text"]
+            text_split = text.split()
             data.append(DatasetHandFull(
-                text=el["text"],
+                text=text,
                 classification=el["classification"],
-                **{slot["entity"]: slot["value"] for slot in el["slots"]}
+                **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
             ))
         template_dataset.append(data)
 

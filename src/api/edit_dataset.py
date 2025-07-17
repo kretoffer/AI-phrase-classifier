@@ -44,7 +44,7 @@ async def update_dataset(name, data: UpdateDatasetFormData):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/{name}/synonimz.json", "w+", encoding="utf-8") as f:
+    with open(f"{projects_dir}/{name}/sinonimz.json", "w+", encoding="utf-8") as f:
         if f.read():
             synonimz = json.load(f)
         else:

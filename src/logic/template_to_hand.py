@@ -6,7 +6,7 @@ def template2hand(template: dict):
             for el in list(template["entitys"].values())[0]:
                 phrase = text.replace(f"${key}", el["text"])
                 phrase_split = phrase.split()
-                entity_split = el["value"].split()
+                entity_split = el["text"].split()
 
                 tokens = []
                 for i, phr in enumerate(phrase_split):
