@@ -19,7 +19,7 @@ from src.shemes import Project, DatasetData, UpdateDatasetFormData, DatasetSlot
 
 router = APIRouter()
 
-@router.post("/update-dataset/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+@router.post("/update-dataset/{name}", tags=["api"])
 async def update_dataset(name, data: UpdateDatasetFormData):
 
     dataset_data = DatasetData(
@@ -70,7 +70,7 @@ async def update_dataset(name, data: UpdateDatasetFormData):
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return RedirectResponse(url=f"/add_to_dataset/{name}", status_code=303)
+    return 
 
 @router.post("/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):

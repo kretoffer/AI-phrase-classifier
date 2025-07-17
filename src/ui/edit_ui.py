@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List, Literal, Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastui import AnyComponent, FastUI
 from fastui import components as c
 from fastui.events import GoToEvent, PageEvent
@@ -283,7 +283,7 @@ def edit_entities_page(name):
 
 
 @router.get("/project/{name}/edit/dataset", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
-def edit_dataset_page(name:str):
+def edit_dataset_page(name:str, request: Request):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
@@ -292,25 +292,13 @@ def edit_dataset_page(name:str):
         )
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
 
-    class FormAddToDatasetHand(BaseModel):
-        text: str = Field(title="Phrase")
-        classification: Enum("Intent", {v: v for v in project.intents}) # type: ignore
-
-    FormAddToDatasetHandFull = create_model(
-        "FormAddToDatasetHandFull",
-        __base__=FormAddToDatasetHand,
-        **{el: (Optional[str], Field(description=f"If your phrase does not contain an {el}, leave the field blank. Otherwise, enter the name of the entity")) for el in project.entities} # type: ignore
-    )
-
-    form = c.ModelForm(
-            submit_url=f"/api/update-dataset/{project.name}",
-            model=FormAddToDatasetHandFull
-        ) if project.intents else c.Heading(text="So far, not one inten. First add intents", level=3)
-            
-
     return template_edit_page(
         c.Heading(text="Add to dataset", level=2),
-        form,
+        c.Iframe(
+            src=f"{request.base_url}add_to_dataset/{name}", # type: ignore
+            width="100%",
+            height=400
+        ), 
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset template", level=2),
         c.Paragraph(text="You can only add template phrases through a file"),
