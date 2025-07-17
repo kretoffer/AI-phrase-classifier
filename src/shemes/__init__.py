@@ -17,12 +17,22 @@ class SomeEntity(BaseModel):
     name: str
 
 class Slot(BaseModel):
+    entity: str
+
+class FormSlot(Slot):
     start: int
     end: int
-    entity: str
     value: str
+
+class DatasetSlot(Slot):
+    tokens: List[int]
+
+class DatasetData(BaseModel):
+    text: str
+    classification: str
+    slots: List[DatasetSlot]
 
 class UpdateDatasetFormData(BaseModel):
     text: str
     classification: str
-    slots: List[Slot]
+    slots: List[FormSlot] 

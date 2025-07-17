@@ -5,9 +5,18 @@ def template2hand(template: dict):
             key = list(template["entitys"].keys())[0]
             for el in list(template["entitys"].values())[0]:
                 phrase = text.replace(f"${key}", el["text"])
+                phrase_split = phrase.split()
+                entity_split = el["value"].split()
+
+                tokens = []
+                for i, phr in enumerate(phrase_split):
+                    for enity in entity_split:
+                        if enity == phr:
+                            tokens.append(i)
+
                 data.append({
                     "classification" : template["classification"],
-                    "slots": [{"entity":key,"value":el["value"]}],
+                    "slots": [{"entity":key, "tokens": tokens}],
                     "text": phrase
                 })
     return data

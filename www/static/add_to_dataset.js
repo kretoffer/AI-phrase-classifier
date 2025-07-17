@@ -45,7 +45,7 @@ async function extract_entity(ev) {
     entity_line.appendChild(entity_role);
     const value = document.createElement("input");
     value.type = "text";
-    value.value = selectedText;
+    value.value = selectedText.trim();
     entity_line.appendChild(value);
 
     entities_list.appendChild(entity_line);
@@ -102,6 +102,7 @@ async function submit() {
         "classification": intent_select.value,
         "slots": []
     }
+    text_input.value = "";
 
     for (const entity_line of entity_list){
         const slot = {
@@ -112,6 +113,7 @@ async function submit() {
         }
         form.slots.push(slot)
     }
+    document.querySelectorAll(".entity-line").forEach(el => el.remove());
     
     fetch(`/api/update-dataset/${project_name}`, {
         method: "POST",

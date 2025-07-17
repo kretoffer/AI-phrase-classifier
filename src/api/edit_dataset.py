@@ -2,10 +2,11 @@ import json
 import os
 from typing import Annotated, List
 from uuid import uuid4
-from fastapi import APIRouter, Form, UploadFile, Body
+from fastapi import APIRouter, Form, UploadFile
 from fastapi.responses import RedirectResponse
 from fastui import FastUI
 import yaml
+import re
 
 from fastui import components as c
 from fastui.events import GoToEvent
@@ -14,16 +15,42 @@ from fastui.forms import FormFile
 from config import projects_dir
 
 from src.logic.parse_dataset import parse_dataset
-from src.shemes import Project, UpdateDatasetFormData
+from src.shemes import Project, DatasetData, UpdateDatasetFormData, DatasetSlot
 
 router = APIRouter()
 
 @router.post("/update-dataset/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset(name, data: UpdateDatasetFormData):
-    body = data.model_dump()
+
+    dataset_data = DatasetData(
+        text=re.sub(r'[^\w\s]', '', data.text.lower(), flags=re.UNICODE),
+        classification=data.classification,
+        slots=[]
+    )
+    new_synonimz = {}
+    for i, el in enumerate(data.slots):
+        entity = dataset_data.text[el.start:el.end]
+        new_synonimz[entity] = data.slots[i].value
+        entity_split = entity.split()
+        tokens = []
+        for entity in entity_split:
+            for i, word in enumerate(dataset_data.text.split()):
+                if entity in word:
+                    tokens.append(i)
+        dataset_data.slots.append(DatasetSlot(entity=el.entity, tokens=tokens))
+
+    body = dataset_data.model_dump()
     
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
+    
+    with open(f"{projects_dir}/{name}/synonimz.json", "w+", encoding="utf-8") as f:
+        if f.read():
+            synonimz = json.load(f)
+        else:
+            synonimz = {}
+        synonimz.update(new_synonimz)
+        json.dump(synonimz, f, ensure_ascii=False, indent=1)
     
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)

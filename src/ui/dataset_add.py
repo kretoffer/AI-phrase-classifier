@@ -2,8 +2,6 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 import yaml
 
-from src.shemes import Project
-
 from config import projects_dir
 
 
