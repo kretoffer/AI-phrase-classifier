@@ -49,8 +49,6 @@ def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alia
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
-    print(intent_name, entity_name)
-    
     with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
         project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
 

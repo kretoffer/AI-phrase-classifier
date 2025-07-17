@@ -12,7 +12,7 @@ def phases_for_entity(dataset: dict, project: Project):
             "text": el["text"]
         })
         for entity in el["slots"]:
-            phrases[el["classification"]][-1][entity["entity"]] = entity["value"]
+            phrases[el["classification"]][-1][entity["entity"]] = entity["tokens"]
             if entity["entity"] not in phrases["entities"][el["classification"]]:
                 phrases["entities"][el["classification"]].append(entity["entity"])
 

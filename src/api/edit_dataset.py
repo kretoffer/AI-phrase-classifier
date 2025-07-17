@@ -28,15 +28,17 @@ async def update_dataset(name, data: UpdateDatasetFormData):
         slots=[]
     )
     new_synonimz = {}
-    for i, el in enumerate(data.slots):
+    for el in data.slots:
         entity = dataset_data.text[el.start:el.end]
-        new_synonimz[entity] = data.slots[i].value
         entity_split = entity.split()
         tokens = []
         for entity in entity_split:
             for i, word in enumerate(dataset_data.text.split()):
                 if entity in word:
                     tokens.append(i)
+        synonim = " ".join([dataset_data.text.split()[token] for token in tokens])
+        if synonim != el.value:
+            new_synonimz[synonim] = el.value
         dataset_data.slots.append(DatasetSlot(entity=el.entity, tokens=tokens))
 
     body = dataset_data.model_dump()
@@ -44,12 +46,14 @@ async def update_dataset(name, data: UpdateDatasetFormData):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     
-    with open(f"{projects_dir}/{name}/sinonimz.json", "w+", encoding="utf-8") as f:
-        if f.read():
-            synonimz = json.load(f)
+    with open(f"{projects_dir}/{name}/sinonimz.json", "r+", encoding="utf-8") as f:
+        if file := f.read():
+            synonimz = json.loads(file)
         else:
             synonimz = {}
         synonimz.update(new_synonimz)
+        f.seek(0)
+        f.truncate()
         json.dump(synonimz, f, ensure_ascii=False, indent=1)
     
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:

@@ -16,9 +16,9 @@ def classificate_hand(project, question:str = Query("Что такое AI-classi
     if not os.path.exists(f"{projects_dir}/{project}"):
         return {"error": "no such project exists"}
     
-    if yaml.load(open(f"{projects_dir}/{project}/config.yaml", "r"), Loader=yaml.SafeLoader)["status"] in ("off", "educated", "error"):
-        return {"error": "project was off or education"}
+    if yaml.load(open(f"{projects_dir}/{project}/config.yaml", "r"), Loader=yaml.SafeLoader)["status"] in ("off", "error"):
+        return {"error": "project was off or errorid"}
 
     intent, emb = classificate(f"{projects_dir}/{project}", question, True)
-    entities = extract(f"{projects_dir}/{project}", emb, intent)
+    entities = extract(f"{projects_dir}/{project}", emb, intent, question)
     return {"intent": intent, "entities": entities}

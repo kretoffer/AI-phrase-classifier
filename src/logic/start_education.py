@@ -22,6 +22,17 @@ def start_educate(path_to_project: str):
 
     with open(f"{path_to_project}/dataset.json", 'r', encoding='utf-8') as file:
         dataset: dict = json.load(file)
+
+    with open(f"{path_to_project}/sinonimz.json", "r+", encoding="utf-8") as f:
+        sinonimz = json.load(f)
+        for el in dataset["template-data"]:
+            for entity in el["entitys"]:
+                for elem in el["entitys"][entity]:
+                    sinonimz[elem["text"]] = elem["value"]
+        f.seek(0)
+        f.truncate()
+        json.dump(sinonimz, f, ensure_ascii=False, indent=1)
+
     dataset = get_hand_data(dataset)
 
     with open(f"{path_to_project}/config.yaml", "w", encoding="utf-8") as f:
@@ -33,15 +44,6 @@ def start_educate(path_to_project: str):
         data = vocab
 
         json.dump(data, f, ensure_ascii=False)
-
-    with open(f"{path_to_project}/sinonimz.json", "w+", encoding="utf-8") as f:
-        sinonimz = json.load(f)
-        for el in dataset["template-data"]:
-            for entity in el["entitys"]:
-                for elem in el["entitys"][entity]:
-                    sinonimz[elem["text"]] = elem["value"]
-        json.dump(sinonimz, f, ensure_ascii=False, indent=1)
-
 
     #TODO
     # if not os.path.exists(f"{path_to_project}/embedding.bin"):
@@ -65,7 +67,6 @@ def start_educate(path_to_project: str):
 
     epochs = project.epochs if project.epochs else auto_select_epochs(len(data), project.learning_rate)
     educate_classifier(data, embedding_matrix, project.embedding_dim*32, project.hidden_layer, len(project.intents), path_to_project, project.activation_method, epochs, project.learning_rate) # type: ignore
-    
     start_educate_extractors(project, phrases, embedding_matrix, vocab)
 
     print(f"{project.name} was educated")
@@ -84,25 +85,20 @@ def start_educate_extractors(project: Project, phrases: dict, embedding_matrix, 
             continue
         entities = phrases["entities"][intent]
         for entity in entities:
-            values = []
             data = []
             for el in phrases[intent]:
-                values.append(el[entity])
                 data.append((el["text"], el[entity]))
-            values = list(set(values))
-            with open(f"{projects_dir}/{project.name}/models/{intent}/{entity}.pkl", "wb") as f:
-                pickle.dump(values, f)
 
             entity_dataset = []
             for el in data:
                 tokens = tokenize(el[0], vocab)
                 emb = embedding(embedding_matrix, tokens)
-                label = np.array([[0] for _ in range(0, len(values))])
-                label[values.index(el[1])] = 1.0
+                label = np.array([[0] for _ in range(0, 32)])
+                for token in el[1]:
+                    label[token] = 1.0
                 entity_dataset.append((emb, label))
             
             epochs = project.epochs if project.epochs else auto_select_epochs(len(entity_dataset), project.learning_rate)
-            if len(values) == 1:
-                epochs = 1
-            educate_entity_extractor(entity_dataset, project.embedding_dim*32, project.hidden_layer, len(values), f"{projects_dir}/{project.name}/models", project.activation_method, epochs, entity, intent, project.learning_rate)
+
+            educate_entity_extractor(entity_dataset, project.embedding_dim*32, project.hidden_layer, 32, f"{projects_dir}/{project.name}/models", project.activation_method, epochs, entity, intent, project.learning_rate)
             

@@ -14,7 +14,7 @@ def optimize_dataset(phrases: dict) -> dict:
             for entity in phrases["entities"][intent]:
                 slot["slots"].append({
                     "entity": entity,
-                    "value": el[entity]
+                    "tokens": el[entity]
                 })
 
             slots[intent].append(slot)
@@ -22,7 +22,7 @@ def optimize_dataset(phrases: dict) -> dict:
     dataset_len = max([len(slots[intent]) for intent in phrases["entities"]])
     
     for intent in phrases["entities"]:
-        while len(slots[intent]) < dataset_len:
+        while len(slots[intent]) < dataset_len and len(slots[intent]) > 0:
             slots[intent].append(choice(slots[intent]))
 
     for el in slots.values():

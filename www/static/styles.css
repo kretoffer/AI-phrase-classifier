@@ -87,3 +87,7 @@ input:focus {
     font-weight: 500;
     background: #bebebe;
 }
+
+body {
+    padding: 5px;
+}

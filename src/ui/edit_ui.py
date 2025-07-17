@@ -305,7 +305,7 @@ def edit_dataset_page(name:str, request: Request):
         c.Iframe(
             src=f"{request.base_url}add_to_dataset/{name}", # type: ignore
             width="100%",
-            height=400
+            height=450
         ), 
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset template", level=2),
