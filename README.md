@@ -53,20 +53,56 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-The project aims to create an open-source message classifier with flexible configuration, the ability to work on a processor and video card, the ability to run it both locally and use a cloud solution.
+The project aims to create an open-source message classifier with flexible configuration, the ability to work on a processor and video card, the ability to run it both locally and use a cloud solution. AI-phrase-classifier must classify the message and extract entities.
 
-
+### Demo
+![Demo](./docs/demo.png)
 
 ### Built With
 
-The classifier is developed in python using the Numpy library for CPU computations and the CuPy library for GPU computations.
+The classifier is developed in python using the Numpy library for CPU computations and the CuPy library for GPU computations. Interaction occurs via the http protocol using the fast api framework
 
 * ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+* ![Fastapi](https://img.shields.io/badge/fastapi-%23316192.svg?style=for-the-badge&logo=fastapi&logoColor=white)
 * ![Numpy](https://img.shields.io/badge/numpy-%23316192.svg?style=for-the-badge&logo=numpy&logoColor=white)
 * ![CuPy](https://img.shields.io/badge/cupy-%234ea94b.svg?style=for-the-badge&logo=nvidia&logoColor=white)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+
+## Installation
+For install classifier run in terminal (you need a git)
+```sh
+git clone https://github.com/kretoffer/AI-phrase-classifier
+cd AI-phrase-classifier
+```
+
+## Usage
+### Launch with docker
+To launch a project via docker you will need [docker](https://docs.docker.com/)
+```sh
+docker build . -t classifier
+docker run -d -p 8585:8585 classifier
+```
+Or by connecting the directory in which the dataset and trained models are stored
+```sh
+docker build . -t classifier
+docker run -d -p 8585:8585 -v "/home/{user}/AI-phrase-classifier-data:/AI-phrase-classifier-data" classifier
+```
+### Launch without docker
+To launch a project without docker you need a python
+
+#### Preparation:
+```sh
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+#### Run
+```sh
+source .venv/bin/activate
+python main.py
+```
 
 
 <!-- ROADMAP -->
@@ -119,4 +155,3 @@ Don't forget to give the project a star! Thanks again!
 [issues-url]: https://github.com/kretoffer/AI-phrase-classifier/issues
 [license-shield]: https://img.shields.io/github/license/kretoffer/AI-phrase-classifier.svg?style=flat
 [license-url]: https://github.com/kretoffer/AI-phrase-classifier/blob/master/LICENSE
-[product-screenshot]: images/screenshot.png
