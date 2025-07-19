@@ -49,6 +49,8 @@ def new_project(name:str = Form("test", alias="project-name")):
 
     with open(f"{projects_dir}/{name}/dataset.json", "x", encoding="utf-8") as f:
         f.write('{"hand-data": [], "template-data": []}')
+    with open(f"{projects_dir}/{name}/educated.json", "x", encoding="utf-8") as f:
+        f.write('{}')
 
     
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
