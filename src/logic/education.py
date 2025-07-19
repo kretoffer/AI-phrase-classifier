@@ -15,7 +15,8 @@ def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output
 
     print("Educate classifier")
     for epoch in range(epochs):
-        print(f"Epoch {epoch+1}")
+        e_loss = 0
+        e_correct = 0
 
         for input_neurons, classification, tokens in data:
             input_neurons = np.reshape(input_neurons, (-1, 1))
@@ -46,12 +47,10 @@ def educate_classifier(data, embedding_matrix, input_layer, hidden_layer, output
             for i, token in enumerate(tokens):
                 embedding_matrix[token] -= learning_rate * (grad_input[i] / len(tokens))
 
-        print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
-        print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
-        e_loss = 0
-        e_correct = 0
+    print(f"Classifier was educated with {epochs} epochs")
 
-    print("Classifier was educated")
+    print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
+    print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
     
     np.savez(f"{project_path}/classifier.npz", 
              weights_input_to_hidden=weights_input_to_hidden,
@@ -72,7 +71,8 @@ def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, proj
     
     print(f"Educate {entity} extractor for {intent}")
     for epoch in range(epochs):
-        print(f"Epoch {epoch+1}")
+        e_loss = 0
+        e_correct = 0
 
         for input_neurons, classification in data:
             input_neurons = np.reshape(input_neurons, (-1, 1))
@@ -97,12 +97,10 @@ def educate_entity_extractor(data, input_layer, hidden_layer, output_layer, proj
             weights_input_to_hidden += -learning_rate * delta_hidden @ np.transpose(input_neurons)
             bias_input_to_hidden += -learning_rate * delta_hidden
 
-        print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
-        print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
-        e_loss = 0
-        e_correct = 0
+    print(f"{entity} extractor for {intent} was educated with {epochs} epohs")
 
-    print(f"{entity} extractor for {intent} was educated")
+    print(f"Loss: {round(e_loss / len(data) * 100, 3)}%")
+    print(f"Accuracy: {round((e_correct / len(data)) * 100, 3)}%")
 
     np.savez(f"{project_path}/{intent}/{entity}.npz", 
              weights_input_to_hidden=weights_input_to_hidden,

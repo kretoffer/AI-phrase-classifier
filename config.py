@@ -5,7 +5,7 @@ projects_dir = "AI-phrase-classifier-data"
 
 projects_dir_without_system_dir = True
 
-k = 2500
+k = 5000
 
 
 if projects_dir_without_system_dir:
