@@ -128,6 +128,56 @@ dataset.json
     "template-data":[]
 }
 ```
-At the moment, the template part of the dataset can only work with one entity and does not work without entities. *Will be fixed in the next updates*
+
+#### Example of a dataset element with multiple entities
+``` json
+{
+    "classification": "color_message",
+    "texts": [
+        "change the $rrel_entity color to $rrel_color"
+    ],
+    "entitys": {
+        "rrel_entity": [
+            {
+                "text": "body",
+                "value": "body"
+            },
+            {
+                "text": "header",
+                "value": "header"
+            }
+        ],
+        "rrel_color": [
+            {
+                "text": "3f3f3f",
+                "value": "#3f3f3f"
+            },
+            {
+                "text": "888888",
+                "value": "#888888"
+            }
+        ]
+    }
+}
+```
+This example is equivalent to four phrases:
+- Change the body color to #3f3f3f
+- Change the body color to #888888
+- Change the header color to #3f3f3f
+- Change the header color to #888888
+
+# Example of a dataset element without entities
+```json
+{
+    "classification": "greeting",
+    "texts": [
+        "hello",
+        "hi",
+        "hey"
+    ],
+    "entitys": {}
+}
+```
+
 # Synonyms
-If the entity name does not match the entity in the phrase, for example the phrase says "change footer color to 565656", and we want to get the essence "#565656", synonyms come to the rescue. There is a synonyms file in the project folder ```sinonimz.json```. So that the classifier instead "565656" issued a entity "#565656", need to add to the synonyms file the entry ```"565656": "#565656"```. The first element is what is in the phrase, and the second is what we want to see. The first element must be in lower case and without special characters, the second element can have capital letters and special characters.
+If the entity name does not match the entity in the phrase, for example the phrase says "change footer color to 565656", and we want to get the essence "#565656", synonyms come to the rescue. There is a synonyms file in the project folder ```sinonimz.json```. So that the classifier instead "565656" issued a entity "#565656", need to add to the synonyms file the entry ```"565656": "#565656"```. The first element is what is in the phrase, and the second is what we want to see. The first element must be in lower case and without special characters, the second element can have capital letters and special characters. Synonyms in the template part of the dataset are added automatically.
