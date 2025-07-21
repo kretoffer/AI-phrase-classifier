@@ -7,7 +7,7 @@ from src.logic.tokinizator import tokenize
 from src.logic.parse_dataset import parse_dataset
 from src.logic.phrases_for_entity import phases_for_entity
 from src.logic.auto_select_epochs import auto_select_epochs
-from src.logic.optimize_dataset import optimize_dataset
+from src.logic.optimize_dataset import optimize_dataset, optimize_extractor_dataset
 
 from config import projects_dir
 
@@ -29,6 +29,11 @@ def hash_list_of_dicts(lst):
     serialized = json.dumps(lst, sort_keys=True)
     return md5(serialized.encode()).hexdigest()
 
+def project_config_hash(project: Project):
+    hashable_project = project.model_dump()
+    del hashable_project["name"], hashable_project["status"], hashable_project["intents"], hashable_project["entities"]
+    return hash_dict_json(hashable_project)
+
 def start_educate(path_to_project: str):
     project = Project.model_validate(yaml.load(open(f"{path_to_project}/config.yaml", "r"), Loader=yaml.SafeLoader))
     project.status = "educated"
@@ -39,7 +44,8 @@ def start_educate(path_to_project: str):
     dataset_hash = hash_dict_json(dataset)
     with open(f"{path_to_project}/educated.json", "r+", encoding="utf-8") as f:
         educated = json.load(f)
-        if "classifier" in educated and educated["classifier"] == dataset_hash:
+        if "classifier" in educated and educated["classifier"] == dataset_hash \
+        and "project_data" in educated and educated["project_data"] == project_config_hash(project):
             print("The classifier does not need training")
             return
 
@@ -92,6 +98,7 @@ def start_educate(path_to_project: str):
     start_education_threads(classifier_data, data_for_entity_education)
 
     new_educated["classifier"] = dataset_hash
+    new_educated["project_data"] = project_config_hash(project)
     with open(f"{path_to_project}/educated.json", "w", encoding="utf-8") as f:
         json.dump(new_educated, f)
 
@@ -112,12 +119,14 @@ def start_educate_extractors(project: Project, phrases: dict, embedding_matrix, 
         if not phrases["entities"][intent]:
             continue
         dataset_hash = hash_list_of_dicts(phrases[intent])
-        if intent in educated and educated[intent] == dataset_hash:
+        if intent in educated and educated[intent] == dataset_hash\
+            and "project_data" in educated and educated["project_data"] == project_config_hash(project):
             continue
         entities = phrases["entities"][intent]
         for entity in entities:
             data = []
-            for el in phrases[intent]:
+            optimized_phrases, dataset_len = optimize_extractor_dataset(phrases[intent], entity)
+            for el in optimized_phrases:
                 data.append((el["text"], el[entity]))
 
             entity_dataset = []
@@ -129,7 +138,7 @@ def start_educate_extractors(project: Project, phrases: dict, embedding_matrix, 
                     label[token] = 1.0
                 entity_dataset.append((emb, label))
             
-            epochs = project.epochs if project.epochs else auto_select_epochs(len(entity_dataset), project.learning_rate)
+            epochs = project.epochs if project.epochs else auto_select_epochs(dataset_len, project.learning_rate)
 
             data_for_entity_education.append((entity_dataset, project.embedding_dim*32, project.hidden_layer, 32, f"{projects_dir}/{project.name}/models", project.activation_method, epochs, entity, intent, project.learning_rate))
         educated[intent] = dataset_hash
