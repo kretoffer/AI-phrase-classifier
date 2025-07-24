@@ -3,7 +3,6 @@ import os
 from typing import Annotated, List
 from uuid import uuid4
 from fastapi import APIRouter, Form, UploadFile
-from fastapi.responses import RedirectResponse
 from fastui import FastUI
 import yaml
 import re
@@ -21,28 +20,9 @@ router = APIRouter()
 
 @router.post("/update-dataset/{name}", tags=["api"])
 async def update_dataset(name, data: UpdateDatasetFormData):
+    body, new_synonimz = data.to_dataset_data()
+    body = body.model_dump()
 
-    dataset_data = DatasetData(
-        text=re.sub(r'[^\w\s]', '', data.text.lower(), flags=re.UNICODE),
-        classification=data.classification,
-        slots=[]
-    )
-    new_synonimz = {}
-    for el in data.slots:
-        entity = dataset_data.text[el.start:el.end]
-        entity_split = entity.split()
-        tokens = []
-        for entity in entity_split:
-            for i, word in enumerate(dataset_data.text.split()):
-                if entity in word:
-                    tokens.append(i)
-        synonim = " ".join([dataset_data.text.split()[token] for token in tokens])
-        if synonim != el.value:
-            new_synonimz[synonim] = el.value
-        dataset_data.slots.append(DatasetSlot(entity=el.entity, tokens=tokens))
-
-    body = dataset_data.model_dump()
-    
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
     

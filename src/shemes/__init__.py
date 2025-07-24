@@ -1,4 +1,5 @@
-from typing import List, Literal
+import re
+from typing import List, Literal, Tuple
 from pydantic import BaseModel, Field
 
 
@@ -36,3 +37,24 @@ class UpdateDatasetFormData(BaseModel):
     text: str
     classification: str
     slots: List[FormSlot] 
+
+    def to_dataset_data(self) -> Tuple[DatasetData, dict]:
+        dataset_data = DatasetData(
+            text=re.sub(r'[^\w\s]', '', self.text.lower(), flags=re.UNICODE),
+            classification=self.classification,
+            slots=[]
+        )
+        new_synonimz = {}
+        for el in self.slots:
+            entity = dataset_data.text[el.start:el.end]
+            entity_split = entity.split()
+            tokens = []
+            for entity in entity_split:
+                for i, word in enumerate(dataset_data.text.split()):
+                    if entity in word:
+                        tokens.append(i)
+            synonim = " ".join([dataset_data.text.split()[token] for token in tokens])
+            if synonim != el.value:
+                new_synonimz[synonim] = el.value
+            dataset_data.slots.append(DatasetSlot(entity=el.entity, tokens=tokens))
+        return dataset_data, new_synonimz

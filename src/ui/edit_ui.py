@@ -127,7 +127,7 @@ def edit_page(name: str):
 
 
 @router.get("/project/{name}/edit/dataset/view", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
-def view_dataset_page(name:str):
+def view_dataset_page(name:str, request: Request):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
@@ -139,10 +139,12 @@ def view_dataset_page(name:str):
     class DatasetHand(BaseModel):
         text: str = Field(title="Phrase")
         classification: Enum("Intent", {v: v for v in project.intents}) # type: ignore
+        edit: Literal["Edit"] = Field("Edit")
+        id: int
 
     DatasetHandFull = create_model(
         "DatasetHandFull",
-        __base__=DatasetHand,
+        __base__= DatasetHand,
         **{el: (Optional[str], Field(None)) for el in project.entities} # type: ignore
     )
 
@@ -153,21 +155,35 @@ def view_dataset_page(name:str):
         sinonimz = json.load(f)
 
     hand_data = []    
-    for el in dataset["hand-data"]:
+    for id, el in enumerate(dataset["hand-data"]):
         text = el["text"]
         text_split = text.split()
         hand_data.append(DatasetHandFull(
             text=text,
             classification=el["classification"],
+            id = id,
             **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
         ))
 
     columns = [
+        DisplayLookup(field="id"),
         DisplayLookup(field="text"),
         DisplayLookup(field="classification")
     ]
 
     columns.extend([DisplayLookup(field=entity) for entity in project.entities])
+    columns.append(DisplayLookup(field="edit", on_click=GoToEvent(url="$2$1/edit-hand-element/{id}".replace("$1", project.name).replace("$2", str(request.base_url)))))
+    hand_data_table = c.Table(data=hand_data, columns=columns) if hand_data else c.Heading(text="So far, not one phrase", level=3)
+
+    class DatasetTemplate(BaseModel):
+        text: str = Field(title="Phrase")
+        classification: Enum("Intent", {v: v for v in project.intents}) # type: ignore
+
+    DatasetTemplateFull = create_model(
+        "DatasetTemplateFull",
+        __base__= DatasetTemplate,
+        **{el: (Optional[str], Field(None)) for el in project.entities} # type: ignore
+    )
 
     template_dataset_hand = [template2hand(el) for el in dataset["template-data"]]
     template_dataset=[]
@@ -176,16 +192,28 @@ def view_dataset_page(name:str):
         for el in dataset:
             text = el["text"]
             text_split = text.split()
-            data.append(DatasetHandFull(
+            data.append(DatasetTemplateFull(
                 text=text,
                 classification=el["classification"],
                 **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
             ))
         template_dataset.append(data)
 
-    hand_data_table = c.Table(data=hand_data, columns=columns) if hand_data else c.Heading(text="So far, not one phrase", level=3)
+    columns = [
+        DisplayLookup(field="text"),
+        DisplayLookup(field="classification")
+    ]
+    columns.extend([DisplayLookup(field=entity) for entity in project.entities])
 
-    template_data_tabels = [c.Table(data=data, columns=columns) for data in template_dataset]
+    template_data_tabels = []
+    for template_id, data in enumerate(template_dataset):
+        content = [
+            c.Text(text=f"Template {template_id}    "),
+            #c.Link(components=[c.Text(text="Edit template")], on_click=GoToEvent(url=f"{request.base_url}{project.name}/edit-template-element/{template_id}"))
+        ]
+        template_data_tabels.extend(content)
+        template_data_tabels.append(c.Table(data=data, columns=columns))
+
     if not template_data_tabels:
         template_data_tabels = [c.Heading(text="You haven't added any phrase templates yet.", level=3)]
 

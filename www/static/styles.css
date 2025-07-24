@@ -54,18 +54,24 @@ input:focus {
     margin: 5px 0;
 }
 
-.entity-line span {
+.entity-delete {
     flex: 1;
+    color: #5f5f5f;
+    border: 0;
+}
+
+.entity-line span:not(.entity-delete) {
+    flex: 8;
     color: #272727;
 }
 
 .entity-line input {
-    flex: 1;
+    flex: 8;
     color: #272727;
 }
 
-.entity-labels span {
-    flex: 1;
+.entity-labels span:not(.entity-delete) {
+    flex: 8;
     color: #5f5f5f;
 }
 

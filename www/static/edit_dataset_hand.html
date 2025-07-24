@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit dataset form</title>
+  <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/npm/@pydantic/fastui-prebuilt@0.0.24/dist/assets/index.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <label for="text" class="form-label fw-bold">Phrase</label><br>
+    <input type="text" id="text" name="text" required>
+    <div id="modal">
+    </div><br>
+
+    <label for="classification" class="form-label fw-bold">Intent</label><br>
+    <select id="classification" name="classification" style="width: 30%;" required>
+        <option value=""></option>
+    </select><br>
+
+    <div id="entities-list">
+        <div class="entity-labels">
+            <span>entity</span>
+            <span>role</span>
+            <span>value</span>
+            <span class="entity-delete">delete</span>
+        </div>
+        <div style="width: 100%; background: #c5c5c5; height: 1px; margin: 2px 0 12px 0;"></div>
+    </div><br>
+
+    <button class="btn btn-primary" onclick="submit()">Submit</button><br><br>
+    <button class="btn btn-warning" onclick="delete_element()">Delete element</button>
+
+    <script src="/static/edit_dataset_hand.js" type="module"></script>
+    <script src="/static/extract_entity.js" type="module"></script>
+</body>
+</html>

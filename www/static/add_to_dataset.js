@@ -1,57 +1,8 @@
-const input = document.getElementById("text");
-const modal = document.getElementById("modal");
+import { extract_entity } from './extract_entity.js'
 
 const path = window.location.pathname;
 const segments = path.split("/").filter(Boolean);
 const project_name = segments[1];
-
-document.addEventListener("selectionchange", () => {
-    const activeElement = document.activeElement;
-
-    if (activeElement === input) {
-        const selectionStart = input.selectionStart;
-        const selectionEnd = input.selectionEnd;
-
-        if (selectionStart !== selectionEnd) {
-        modal.style.display = "block";
-        return;
-        }
-    }
-
-  modal.style.display = "none";
-});
-
-async function extract_entity(ev) {
-    const entity = ev.target.id;
-
-    const input = document.getElementById("text");
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-
-    const selectedText = input.value.substring(start, end);
-
-    const entities_list = document.getElementById("entities-list");
-
-    const entity_line = document.createElement("div");
-    entity_line.classList.add("entity-line");
-    entity_line.dataset.start = start;
-    entity_line.dataset.end = end;
-    
-    const entity_name = document.createElement("span");
-    entity_name.textContent = selectedText;
-    entity_line.appendChild(entity_name);
-    const entity_role = document.createElement("span");
-    entity_role.textContent = entity;
-    entity_line.appendChild(entity_role);
-    const value = document.createElement("input");
-    value.type = "text";
-    value.value = selectedText.trim();
-    entity_line.appendChild(value);
-
-    entities_list.appendChild(entity_line);
-
-    document.getElementById("modal").style.display = "none";
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
     const project_data = await fetchData();
@@ -80,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function fetchData() {
     try {
-        const response = await fetch(`/project-info/${project_name}`);
+        const response = await fetch(`/api/project-info/${project_name}`);
 
         if (!response.ok) {
         throw new Error("Request error: " + response.status);
@@ -92,12 +43,12 @@ async function fetchData() {
     }
 }
 
-async function submit() {
+function submit() {
     const text_input = document.getElementById("text");
     const intent_select = document.getElementById("classification");
     const entity_list = document.getElementsByClassName("entity-line")
 
-    form = {
+    let form = {
         "text": text_input.value,
         "classification": intent_select.value,
         "slots": []
@@ -122,5 +73,5 @@ async function submit() {
         },
         body: JSON.stringify(form)
     })
-
 }
+window.submit = submit;

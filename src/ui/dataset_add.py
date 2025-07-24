@@ -1,20 +1,10 @@
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-import yaml
 
-from config import projects_dir
-
+from src.ui.return_static_html import get_static_html
 
 router = APIRouter()
 
-@router.get("/add_to_dataset/{name}", response_class=HTMLResponse)
+@router.get("/add_to_dataset/{name}", response_class=HTMLResponse, tags=["web"])
 def add_to_dataset_web(name: str):
-    
-    with open("www/templates/add_to_dataset.html", "r", encoding="utf-8") as f:
-        content = f.read()
-    
-    return HTMLResponse(content)
-
-@router.get("/project-info/{name}")
-def project_info(name: str):
-    return yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader)
+    return HTMLResponse(get_static_html("add_to_dataset"))
