@@ -55,7 +55,7 @@ def new_project(name:str = Form("test", alias="project-name")):
     
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
-@router.get("/download-dataset/{name}")
+@router.get("/download-dataset/{name}", tags=["ui api"])
 def download_dataset(name: str):
     return FileResponse(
         path=f"{projects_dir}/{name}/dataset.json",
@@ -63,7 +63,7 @@ def download_dataset(name: str):
         media_type="application/json"
     )
 
-@router.get("/open-project-dir/{name}")
+@router.get("/open-project-dir/{name}", tags=["ui api"])
 def open_project_dir(name: str):
     open_file_methods[platform.system()](f"{projects_dir}/{name}")
     return []

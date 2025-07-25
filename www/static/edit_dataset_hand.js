@@ -111,7 +111,6 @@ function submit() {
         "classification": intent_select.value,
         "slots": []
     }
-    text_input.value = "";
 
     for (const entity_line of entity_list){
         const slot = {
@@ -122,7 +121,6 @@ function submit() {
         }
         form.slots.push(slot)
     }
-    document.querySelectorAll(".entity-line").forEach(el => el.remove());
     
     fetch(`/api/update-hand-element/${project_name}/${element_id}`, {
         method: "POST",

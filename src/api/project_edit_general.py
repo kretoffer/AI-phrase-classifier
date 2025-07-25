@@ -17,7 +17,7 @@ from src.shemes.ui_forms import EditForm
 
 router = APIRouter()
 
-@router.post("/update-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+@router.post("/update-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]): # type: ignore
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
@@ -31,7 +31,7 @@ def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):
     
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 
-@router.post("/delete-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+@router.post("/delete-project/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def delete_project(name: str, name_form: str = Form(None, alias="project-name")):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
@@ -44,7 +44,7 @@ def delete_project(name: str, name_form: str = Form(None, alias="project-name"))
     return [c.FireEvent(event=GoToEvent(url="/web/"))]
 
 
-@router.post("/add-intent-entity/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui api"])
+@router.post("/add-intent-entity/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alias="intent-name"), entity_name: Optional[str] = Form(None, alias="entity-name")):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
