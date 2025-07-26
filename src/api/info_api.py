@@ -32,3 +32,9 @@ def dataset_hand_element_info(project_name: str, element_id: int):
         })
     element["slots"] = slots
     return element
+
+@router.get("/dataset-template-element-data/{project_name}/{element_id}", tags=["api"])
+def dataset_template_element_info(project_name: str, element_id: int):
+    with open(f"{projects_dir}/{project_name}/dataset.json", "r", encoding="utf-8") as f:
+        dataset = json.load(f)
+    return dataset["template-data"][element_id]

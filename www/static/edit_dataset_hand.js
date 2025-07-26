@@ -129,7 +129,7 @@ function submit() {
         },
         body: JSON.stringify(form)
     })
-    window.location.href = `/web/project/${project_name}/edit/dataset/view`
+    window.history.go(-1)
 }
 
 function delete_element(){
@@ -141,7 +141,7 @@ function delete_element(){
             console.error(`Error: ${response.status}`);
         }
     });
-    window.location.href = `/web/project/${project_name}/edit/dataset/view`
+    window.history.go(-1)
 }
 
 window.submit = submit;

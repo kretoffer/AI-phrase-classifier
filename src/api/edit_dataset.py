@@ -14,12 +14,13 @@ from fastui.forms import FormFile
 from config import projects_dir
 
 from src.logic.parse_dataset import parse_dataset
-from src.shemes import Project, DatasetData, UpdateDatasetFormData, DatasetSlot
+from src.shemes import Project, UpdateDatasetFormData, DatasetTemplateData
+from src.logic.template_to_hand import template2hand
 
 router = APIRouter()
 
 @router.post("/update-dataset/{name}", tags=["api"])
-async def update_dataset(name, data: UpdateDatasetFormData):
+def update_dataset(name, data: UpdateDatasetFormData):
     body, new_synonimz = data.to_dataset_data()
     body = body.model_dump()
 
@@ -55,6 +56,31 @@ async def update_dataset(name, data: UpdateDatasetFormData):
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
     return 
+
+@router.post("/add-template-element/{name}", tags=["api"])
+def update_dataset_template(name, data: DatasetTemplateData):
+    if not os.path.exists(f"{projects_dir}/{name}"):
+        return {"error": "no such project exists"}
+    
+    with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
+        dataset = json.load(f)
+
+        with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as conf:
+            project = Project.model_validate(yaml.load(conf, Loader=yaml.SafeLoader))
+            if data.classification not in project.intents:
+                project.intents.append(data.classification)
+            for entity in data.entitys.keys():
+                if entity not in project.entities:
+                    project.entities.append(entity)
+            conf.seek(0)
+            conf.truncate()
+            yaml.dump(project.model_dump(), conf, allow_unicode=True, sort_keys=False)
+
+        dataset["template-data"].append(data.model_dump())
+
+        f.seek(0)
+        f.truncate()
+        json.dump(dataset, f, ensure_ascii=False, indent=1)
 
 @router.post("/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
 async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):

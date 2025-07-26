@@ -1,5 +1,5 @@
 import re
-from typing import List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple
 from pydantic import BaseModel, Field
 
 
@@ -58,3 +58,12 @@ class UpdateDatasetFormData(BaseModel):
                 new_synonimz[synonim] = el.value
             dataset_data.slots.append(DatasetSlot(entity=el.entity, tokens=tokens))
         return dataset_data, new_synonimz
+    
+class TemplateEntity(BaseModel):
+    text: str
+    value: str
+    
+class DatasetTemplateData(BaseModel):
+    classification: str
+    texts: List[str]
+    entitys: dict #Dict[str, List[TemplateEntity]]

@@ -1,0 +1,37 @@
+.contant-div {
+    background: #eee;
+    padding: 10px 20px;
+    border-radius: 10px;
+    width: 100%;
+    margin: 5px;
+}
+
+.template-entity-line {
+    width: 100%;
+    display: flex;
+    margin: 5px 0;
+}
+
+.template-entity-delete {
+    flex: 1;
+    color: #5f5f5f;
+    border: 0;
+}
+
+.template-entity-line input {
+    flex: 8;
+    color: #272727;
+    margin-right: 5px;
+}
+
+.phrase-line {
+    width: 100%;
+    display: flex;
+    margin: 5px 0;
+}
+
+.phrase-line input {
+    flex: 16;
+    color: #272727;
+    margin-right: 5px;
+}

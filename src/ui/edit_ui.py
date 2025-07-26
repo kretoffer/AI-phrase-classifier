@@ -209,7 +209,7 @@ def view_dataset_page(name:str, request: Request):
     for template_id, data in enumerate(template_dataset):
         content = [
             c.Text(text=f"Template {template_id}    "),
-            #c.Link(components=[c.Text(text="Edit template")], on_click=GoToEvent(url=f"{request.base_url}{project.name}/edit-template-element/{template_id}"))
+            c.Link(components=[c.Text(text="Edit template")], on_click=GoToEvent(url=f"{request.base_url}{project.name}/edit-template-element/{template_id}"))
         ]
         template_data_tabels.extend(content)
         template_data_tabels.append(c.Table(data=data, columns=columns))
@@ -337,7 +337,11 @@ def edit_dataset_page(name:str, request: Request):
         ), 
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset template", level=2),
-        c.Paragraph(text="You can only add template phrases through a file"),
+        c.Iframe(
+            src=f"{request.base_url}add_template_to_dataset/{name}", # type: ignore
+            width="100%",
+            height=800
+        ), 
         c.Paragraph(text=""),
         c.Heading(text="Add to dataset with file", level=2),
         c.Form(
