@@ -3,7 +3,7 @@ from fastapi import APIRouter
 import json
 
 from config import projects_dir
-from src.shemes import UpdateDatasetFormData
+from src.shemes import UpdateDatasetFormData, DatasetTemplateData
 
 router = APIRouter()
 
@@ -38,3 +38,24 @@ def update_hand_element(project: str, id: int, form_data: UpdateDatasetFormData)
         f.seek(0)
         f.truncate()
         json.dump(synonimz, f, ensure_ascii=False, indent=1)
+
+@router.delete("/delete-template-element/{project}/{id}", tags=["api"])
+def delete_template_element(project: str, id: int):
+    with open(f"{projects_dir}/{project}/dataset.json", "r+", encoding="utf-8") as f:
+        dataset = json.load(f)
+        del dataset["template-data"][id]
+        f.seek(0)
+        f.truncate()
+        json.dump(dataset, f, ensure_ascii=False, indent=1)
+
+@router.post("/update-template-element/{project}/{id}", tags=["api"])
+def update_template_element(project: str, id: int, form_data: DatasetTemplateData):
+    if not os.path.exists(f"{projects_dir}/{project}"):
+        return {"error": "no such project exists"}
+    
+    with open(f"{projects_dir}/{project}/dataset.json", "r+", encoding="utf-8") as f:
+        dataset = json.load(f)
+        dataset["template-data"][id] = form_data.model_dump()
+        f.seek(0)
+        f.truncate()
+        json.dump(dataset, f, ensure_ascii=False, indent=1)

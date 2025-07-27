@@ -200,16 +200,15 @@ def view_dataset_page(name:str, request: Request):
         template_dataset.append(data)
 
     columns = [
-        DisplayLookup(field="text"),
-        DisplayLookup(field="classification")
+        DisplayLookup(field="text")
     ]
     columns.extend([DisplayLookup(field=entity) for entity in project.entities])
 
     template_data_tabels = []
     for template_id, data in enumerate(template_dataset):
         content = [
-            c.Text(text=f"Template {template_id}    "),
-            c.Link(components=[c.Text(text="Edit template")], on_click=GoToEvent(url=f"{request.base_url}{project.name}/edit-template-element/{template_id}"))
+            c.Markdown(text=f"Template {template_id}    **{data[0].classification.value}**  "  \
+                       f"[Edit template]({request.base_url}{project.name}/edit-template-element/{template_id})")
         ]
         template_data_tabels.extend(content)
         template_data_tabels.append(c.Table(data=data, columns=columns))

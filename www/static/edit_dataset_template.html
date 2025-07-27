@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit dataset form</title>
+  <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/npm/@pydantic/fastui-prebuilt@0.0.24/dist/assets/index.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/template_dataset_styles.css">
+</head>
+<body class="container" style="padding-top: 3%;">
+    <h2>Edit dataset element</h2>
+    <div class="container">
+        <h4>Phrases</h4>
+        <div class="contant-div" id="phrases-div">
+            <input id="phrases-input" type="text" style="width: 90%; display: inline-block; margin-right: 1%; margin-bottom: 10px;">
+            <button style="display: inline-block; font-weight: 700; width: 8%;" class="btn btn-primary" onclick="add_phrase()">Add +</button>
+        </div>
+
+        <label for="classification" class="form-label fw-bold">Intent</label><br>
+        <select id="classification" name="classification" style="width: 30%;" required>
+            <option value=""></option>
+        </select><br>
+
+        <div class="container", id="entities-container"></div>
+
+        <br>
+        <button class="btn btn-secondary" onclick="window.history.go(-1)">Cancel</button><span> </span>
+        <button class="btn btn-primary" onclick="submit()">Submit</button><p></p>
+        <button class="btn btn-warning" onclick="delete_element()">Delete element</button>
+    </div>
+
+    <script src="/static/edit_dataset_template.js"></script>
+</body>
+</html>
