@@ -55,6 +55,23 @@ There can only be one entity of one class in one phrase. If you need to select t
 All phrases of one message class must have the same entity types. For example, if one phrase about_entity contains an entity of the rrel_entity type, then the entity of this type must be in all phrases of this class.<br>
 These notes are also relevant for updating the dataset via a file and a template.
 
+### Template part of the dataset
+To begin, you need to enter a phrase in the phrase field and click the "Add +" button. The phrase must be entered in lower case and without special characters. The phrase can contain variables, which are designated as $`<entity name>`. During training, entities take the place of variables. Afterwards, you need to add the corresponding entities to the fields with entities, as well as phrases.
+
+![add-to-dataset-template](./images/add-to-dataset-template.png)
+
+This example looks like this in the dataset:
+
+![template-in-dataset](./images/template-in-dataset.png)
+
+There are cases when the word that should be in the phrase and the word that the classifier should determine are different. For example, the phrase "change footer color to `565656`", and the classifier should return `#565656`. In this case, in the second field of the entity, called `value`, you need to enter the word that you want to receive from the classifier.
+
+![add-to-dataset-template-2](./images/add-to-dataset-template-2.png)
+
+This will look like this in the dataset:
+
+![template-in-dataset-2](./images/template-in-dataset-2.png)
+
 ## Training the classifier via a dataset file
 You can also train the classifier via a dataset file. You can take it either from the project directory, which you can get to using the Open project folder button in the general settings section, or by clicking the Download dataset button in the general settings section. You can learn about the structure of the dataset [here](https://github.com/kretoffer/AI-phrase-classifier/tree/main/docs/dataset.md)
 

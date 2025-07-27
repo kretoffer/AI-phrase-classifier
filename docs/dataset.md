@@ -1,5 +1,5 @@
 # Dataset types
-AI-phrase-classifier is based on artificial intelligence technologies, in particular on artificial neural networks and machine learning algorithms. The classifier is trained on a dataset that is stored in json format, the dataset can be edited both manually and through a [graphical interface](https://github.com/kretoffer/AI-phrase-classifier/tree/main/docs/training_quide.md).
+AI-phrase-classifier is based on artificial intelligence technologies, in particular on artificial neural networks and machine learning algorithms. The classifier is trained on a dataset that is stored in json format, the dataset can be edited both manually and through a [graphical interface](https://github.com/kretoffer/AI-phrase-classifier/tree/main/docs/guide.md).
 
 The classifier dataset is divided into two parts and looks like this:
 ```json
