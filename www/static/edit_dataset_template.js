@@ -110,6 +110,14 @@ function add_entity(ev){
     input.value = "";
 }
 
+function handleKeyPress(ev) {
+  if (ev.key === "Enter") add_entity(ev);
+}
+
+document.getElementById("phrases-input").addEventListener("keypress", function(ev){
+    if (ev.key === "Enter") add_phrase();
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
     const project_data = await fetchProjectData();
     const element_data = await fetchElementData();
@@ -138,6 +146,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         add_entity_input.type = "text";
         add_entity_input.id = `${entity}_input`;
         add_entity_input.style = "width: 90%; display: inline-block; margin-right: 1%;";
+        add_entity_input.dataset.entity = entity;
+        add_entity_input.addEventListener("keypress", handleKeyPress);
         entity_list.appendChild(add_entity_input);
         const add_entity_button = document.createElement("button");
         add_entity_button.classList.add("btn", "btn-primary");

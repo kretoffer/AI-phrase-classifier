@@ -21,6 +21,11 @@ async function fetchProjectData() {
     }
 }
 
+function handleKeyPress(ev) {
+  if (ev.key === "Enter") add_entity(ev);
+}
+
+
 function add_entity(ev){
     const role = ev.target.dataset.entity;
     const input = document.getElementById(`${role}_input`)
@@ -44,6 +49,10 @@ function add_entity(ev){
 
     input.value = "";
 }
+
+document.getElementById("phrases-input").addEventListener("keypress", function(ev){
+    if (ev.key === "Enter") add_phrase();
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
     const project_data = await fetchProjectData();
@@ -70,6 +79,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         add_entity_input.type = "text";
         add_entity_input.id = `${entity}_input`;
         add_entity_input.style = "width: 90%; display: inline-block; margin-right: 1%;";
+        add_entity_input.dataset.entity = entity;
+        add_entity_input.addEventListener("keypress", handleKeyPress);
         entity_list.appendChild(add_entity_input);
         const add_entity_button = document.createElement("button");
         add_entity_button.classList.add("btn", "btn-primary");
