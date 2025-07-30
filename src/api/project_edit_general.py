@@ -2,6 +2,7 @@ import os
 import shutil
 from typing import Optional
 from fastapi import APIRouter, Form
+from fastapi.responses import RedirectResponse
 from fastui import FastUI
 from fastui import components as c
 from fastui.events import GoToEvent, PageEvent
@@ -65,3 +66,27 @@ def add_intent_or_entity(name: str, intent_name: Optional[str] = Form(None, alia
         c.FireEvent(event=PageEvent(name="add-intent-modal", clear=True)),
         c.FireEvent(event=PageEvent(name="add-entity-modal", clear=True))
     ]
+
+@router.get("/{project_name}/delete-intent/{intent}", tags=["api"])
+def delete_intent(project_name:str, intent: str):
+    with open(f"{projects_dir}/{project_name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        project.intents.remove(intent)
+
+        f.seek(0)
+        f.truncate()
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
+
+    return RedirectResponse(url=f"/web/project/{project_name}/edit/intents")
+
+@router.get("/{project_name}/delete-entity/{entity}", tags=["api"])
+def delete_entity(project_name:str, entity: str):
+    with open(f"{projects_dir}/{project_name}/config.yaml", "r+", encoding="utf-8") as f:
+        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        project.entities.remove(entity)
+
+        f.seek(0)
+        f.truncate()
+        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
+
+    return RedirectResponse(url=f"/web/project/{project_name}/edit/entities")

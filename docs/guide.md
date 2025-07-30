@@ -93,5 +93,5 @@ http://localhost:8585/api/message/nika?q=What is a Nika?
 ```
 response
 ```http response
-{"intent":"about_entity","entities":[{"rrel_entity":"Nika"}]}
+{"intent":"about_entity","entities":[{"role":"rrel_entity", "value":"Nika"}]}
 ```

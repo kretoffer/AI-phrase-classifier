@@ -92,5 +92,5 @@ http://localhost:8585/api/message/nika?q=Что такое классифика�
 ```
 Ответ
 ```http response
-{"intent":"about_entity","entities":[{"rrel_entity":"классификатор"}]}
+{"intent":"about_entity","entities":[{"role":"rrel_entity", "value":"классификатор"}]}
 ```

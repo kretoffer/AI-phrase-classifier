@@ -16,22 +16,27 @@ def template2hand(template: dict):
 
             for combination in combinations:
                 phrase = text
-                tokens = []
+                slots = []
                 for i, entity in enumerate(entities):
                     phrase = phrase.replace(f"${entity}", combination[i]["text"])
-                phrase_split = phrase.split()
-                for i, entity in enumerate(entities):
-                    entity_split = combination[i]["text"].split()
-
-                    token = []
-                    for j, phr in enumerate(phrase_split):
-                        for en in entity_split:
-                            if en == phr:
-                                token.append(j)
-                    tokens.append({"entity": entity, "tokens": token})
+                    start = len(text.split(f"${entity}")[0])
+                    end = len(combination[i]["text"])+start
+                    slots.append({
+                        "entity": entity,
+                        "start": start,
+                        "end": end
+                    })
                 data.append({
                     "classification" : template["classification"],
-                    "slots": tokens,
+                    "slots": slots,
                     "text": phrase
                 })
+    return data
+
+def get_hand_data(data):
+    if "template-data" not in data:
+        return data
+    for template in data["template-data"]:
+        data["hand-data"].extend(template2hand(template))
+    del(data["template-data"])
     return data

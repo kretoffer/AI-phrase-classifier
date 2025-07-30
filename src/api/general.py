@@ -31,18 +31,12 @@ def new_project(name:str = Form("test", alias="project-name")):
         return {"error": "a project with this name already exists"}
     
     os.makedirs(f"{projects_dir}/{name}")
-    os.makedirs(f"{projects_dir}/{name}/models")
     
     with open(f"{projects_dir}/{name}/config.yaml", "w", encoding="utf-8") as f:
         project=Project(
             name=name,
             status="off",
-            hidden_layer=50,
-            epochs=0,
-            learning_rate=0.01,
-            embedding_dim=32,
             intents=[],
-            activation_method="sigmoid",
             entities=[]
             )
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
@@ -51,7 +45,8 @@ def new_project(name:str = Form("test", alias="project-name")):
         f.write('{"hand-data": [], "template-data": []}')
     with open(f"{projects_dir}/{name}/educated.json", "x", encoding="utf-8") as f:
         f.write('{}')
-
+    with open(f"{projects_dir}/{name}/sinonimz.json", "x", encoding="utf-8") as f:
+        f.write('{}')
     
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
 

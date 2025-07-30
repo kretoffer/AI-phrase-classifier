@@ -19,18 +19,9 @@ def dataset_hand_element_info(project_name: str, element_id: int):
     with open(f"{projects_dir}/{project_name}/sinonimz.json", "r", encoding="utf-8") as f:
         sinonimz = json.load(f)
     element = dataset["hand-data"][element_id]
-    text_split =  element["text"].split(" ")
-    slots = []
+    text =  element["text"]
     for slot in element["slots"]:
-        start = len(" ".join(text_split[0:slot["tokens"][0]]))+1
-        entity = " ".join(text_split[slot["tokens"][0]:slot["tokens"][-1]+1])
-        slots.append({
-            "start": start,
-            "end": len(entity)+start,
-            "entity": slot["entity"],
-            "value": sinanimizate(sinonimz, entity)
-        })
-    element["slots"] = slots
+        slot["value"] = sinanimizate(sinonimz, text[slot["start"]:slot["end"]])
     return element
 
 @router.get("/dataset-template-element-data/{project_name}/{element_id}", tags=["api"])

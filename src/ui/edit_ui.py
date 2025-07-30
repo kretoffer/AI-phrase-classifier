@@ -12,7 +12,7 @@ from enum import Enum
 
 from config import projects_dir
 from src.logic.template_to_hand import template2hand
-from src.shemes import Project, SomeEntity
+from src.shemes import Project, DeletebleEntity
 from src.logic.sinanimizator import sinanimizate
 
 router = APIRouter()
@@ -71,25 +71,11 @@ def edit_page(name: str):
         )
 
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
-    
-    class EditForm(BaseModel):
-        #name: Optional[str] = Field(project.name, description="name of the project", title="Project name")
-        hidden_layer: int = Field(project.hidden_layer, gt=0, title="hidden neurouns", description="the count of neurons in hidden layer")
-        epochs: int = Field(project.epochs, title="epochs", description="try 0 to auto set")
-        learning_rate: float = Field(project.learning_rate, gt=0)
-        embedding_dim: int = Field(project.embedding_dim)
-        activation_method: Literal["relu", "sigmoid", "tanh", "leaky relu", "softmax", "swish", "mish"] = Field(project.activation_method)
 
     return template_edit_page(
         c.Page(
             components=[ # type: ignore
                 c.Heading(text=project.name, level=1),
-                c.ModelForm(model=EditForm, submit_url=f"/api/update-project/{project.name}", submit_trigger=PageEvent(name="submit-edits"), footer=[]),
-                c.Paragraph(text=""),
-                c.Button(text="Cancel", named_style="secondary", on_click=GoToEvent(url=f"/web/project/{project.name}")),
-                c.Text(text=" "),
-                c.Button(text="Save", on_click=PageEvent(name="submit-edits")),
-                c.Paragraph(text=""),
                 c.Button(text="Download dataset", on_click=GoToEvent(url=f"/api/download-dataset/{project.name}", target="_blank")),
                 c.Paragraph(text=""),
                 c.Form(
@@ -162,7 +148,7 @@ def view_dataset_page(name:str, request: Request):
             text=text,
             classification=el["classification"],
             id = id,
-            **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
+            **{slot["entity"]: sinanimizate(sinonimz, text[slot["start"]:slot["end"]]) for slot in el["slots"]}
         ))
 
     columns = [
@@ -195,7 +181,7 @@ def view_dataset_page(name:str, request: Request):
             data.append(DatasetTemplateFull(
                 text=text,
                 classification=el["classification"],
-                **{slot["entity"]: sinanimizate(sinonimz, " ".join([text_split[i] for i in slot["tokens"]])) for slot in el["slots"]}
+                **{slot["entity"]: sinanimizate(sinonimz, text[slot["start"]:slot["end"]]) for slot in el["slots"]}
             ))
         template_dataset.append(data)
 
@@ -226,7 +212,7 @@ def view_dataset_page(name:str, request: Request):
 
 
 @router.get("/project/{name}/edit/intents", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
-def edit_intents_page(name):
+def edit_intents_page(name: str, request: Request):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
@@ -236,12 +222,13 @@ def edit_intents_page(name):
         )
 
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
-    intents = [SomeEntity(name=el) for el in project.intents]
+    intents = [DeletebleEntity(name=el) for el in project.intents] # pyright: ignore[reportCallIssue]
 
     table = c.Heading(text="So far, not one intent", level=2) if not intents else c.Table(
             data=intents,
             columns=[
-                DisplayLookup(field="name")
+                DisplayLookup(field="name"),
+                DisplayLookup(field='delete', on_click=GoToEvent(url="$2api/$1/delete-intent/{name}".replace("$1", project.name).replace("$2", str(request.base_url))))
             ]
         )
 
@@ -273,7 +260,7 @@ def edit_intents_page(name):
 
 
 @router.get("/project/{name}/edit/entities", response_model=FastUI, response_model_exclude_none=True, tags=["fast ui interface"])
-def edit_entities_page(name):
+def edit_entities_page(name:str, request: Request):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return c.Page(
             components=[ # type: ignore
@@ -283,12 +270,13 @@ def edit_entities_page(name):
         )
 
     project = Project.model_validate(yaml.load(open(f"{projects_dir}/{name}/config.yaml", "r"), Loader=yaml.SafeLoader))
-    entities = [SomeEntity(name=el) for el in project.entities]
+    entities = [DeletebleEntity(name=el) for el in project.entities] # pyright: ignore[reportCallIssue]
 
     table = c.Heading(text="So far, not one entity", level=2) if not entities else c.Table(
             data=entities,
             columns=[
-                DisplayLookup(field="name")
+                DisplayLookup(field="name"),
+                DisplayLookup(field='delete', on_click=GoToEvent(url="$2api/$1/delete-entity/{name}".replace("$1", project.name).replace("$2", str(request.base_url))))
             ]
         )
 

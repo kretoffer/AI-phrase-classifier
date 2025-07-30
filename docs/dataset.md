@@ -20,15 +20,14 @@ Entity: nika
     "slots": [ // Slots (entities)
         {
             "entity": "rrel_entity", // Entity class
-            "tokens": [ // Tokens that contain the entity
-                3
-            ]
+            "start": 10, // entity start character
+            "end": 15 // entity end character
         }
     ]
 }
 ```
 ### Slots
-The phrase in the dataset must be written in lower case and without special characters. Each slot is a separate entity, there can be one slot, but there can also be many of them. The slot consists of an entity class and tokens. If the first one is clear, then tokens are the numbers of words in which the entity is located (words start from 0). So, the zero word is *what*, the first is *is*, the second is *a*, the third (entity) is *Nika*. If the entity is several words, then there can be several tokens.
+The phrase in the dataset must be written in lower case and without special characters. Each slot is a separate entity, there can be one slot, but there can also be many of them. The slot consists of the entity class, the beginning of the entity, and the end of the entity. If the first one is clear, then the beginning and end of the entity are the numbers of the characters in which the beginning and end of the entity are located (the characters start counting from 0). If the entity is several words, then the rules are exactly the same.
 #### Example of a dataset element, with an entity that spans multiple words
 Entity: Pythagorean theorem
 ```json
@@ -38,10 +37,8 @@ Entity: Pythagorean theorem
     "slots": [ // Slots (entities)
         {
             "entity": "rrel_entity", // Entity class
-            "tokens": [ // Tokens that contain the entity
-                3,
-                4
-            ]
+            "start": 12, // entity start character
+            "end": 31 // entity end character
         }
     ]
 }
@@ -56,15 +53,13 @@ Entity rrel_color: 565656
     "slots": [ // Slots (entities)
         {
             "entity": "rrel_entity", // Enity class
-            "tokens": [ // Tokens that contain the entity
-                1
-            ]
+            "start": 7, // entity start character
+            "end": 13 // entity end character
         },
         {
             "entity": "rrel_color", // Enity class
-            "tokens": [ // Tokens that contain the entity
-                4
-            ]
+            "start": 23, // entity start character
+            "end": 29 // entity end character
         }
     ]
 }
