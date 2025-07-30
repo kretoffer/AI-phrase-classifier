@@ -50,11 +50,6 @@ In the phrase field, enter the phrase you want to teach the classifier. In the i
 
 The procedure must be repeated for each entity in the phrase, after which click the Submit button.
 
-#### Note
-There can only be one entity of one class in one phrase. If you need to select two entities, you must use two different entity classes.<br>
-All phrases of one message class must have the same entity types. For example, if one phrase about_entity contains an entity of the rrel_entity type, then the entity of this type must be in all phrases of this class.<br>
-These notes are also relevant for updating the dataset via a file and a template.
-
 ### Template part of the dataset
 To begin, you need to enter a phrase in the phrase field and click the "Add +" button. The phrase must be entered in lower case and without special characters. The phrase can contain variables, which are designated as $`<entity name>`. During training, entities take the place of variables. Afterwards, you need to add the corresponding entities to the fields with entities, as well as phrases.
 
