@@ -68,12 +68,12 @@ The project aims to create an open-source message classifier with flexible confi
 
 ### Built With
 
-The classifier is developed in python using the Numpy library for CPU computations and the CuPy library for GPU computations. Interaction occurs via the http protocol using the fast api framework
+The classifier is developed in python using the spacy library for extract entities in phrases and the sklearn library for classification phrases. Interaction occurs via the http protocol using the fast api framework
 
 * ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 * ![Fastapi](https://img.shields.io/badge/fastapi-%23316192.svg?style=for-the-badge&logo=fastapi&logoColor=white)
-* ![Numpy](https://img.shields.io/badge/numpy-%23316192.svg?style=for-the-badge&logo=numpy&logoColor=white)
-* ![CuPy](https://img.shields.io/badge/cupy-%234ea94b.svg?style=for-the-badge&logo=nvidia&logoColor=white)
+* ![Spacy](https://img.shields.io/badge/numpy-%23316192.svg?style=for-the-badge&logo=spacy&logoColor=white)
+* ![Sklearn](https://img.shields.io/badge/numpy-%234ea94b.svg?style=for-the-badge&logo=sololearn&logoColor=white)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
