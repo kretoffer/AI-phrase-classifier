@@ -19,7 +19,8 @@ def template2hand(template: dict):
                 slots = []
                 for i, entity in enumerate(entities):
                     phrase = phrase.replace(f"${entity}", combination[i]["text"])
-                    start = len(text.split(f"${entity}")[0])
+                for i, entity in enumerate(entities):
+                    start = len(phrase.split(combination[i]["text"])[0])
                     end = len(combination[i]["text"])+start
                     slots.append({
                         "entity": entity,
