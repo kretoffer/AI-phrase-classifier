@@ -72,8 +72,8 @@ The classifier is developed in python using the spacy library for extract entiti
 
 * ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 * ![Fastapi](https://img.shields.io/badge/fastapi-%23316192.svg?style=for-the-badge&logo=fastapi&logoColor=white)
-* ![Spacy](https://img.shields.io/badge/numpy-%23316192.svg?style=for-the-badge&logo=spacy&logoColor=white)
-* ![Sklearn](https://img.shields.io/badge/numpy-%234ea94b.svg?style=for-the-badge&logo=sololearn&logoColor=white)
+* ![Spacy](https://img.shields.io/badge/spacy-%23316192.svg?style=for-the-badge&logo=spacy&logoColor=white)
+* ![Sklearn](https://img.shields.io/badge/sklearn-%234ea94b.svg?style=for-the-badge&logo=sololearn&logoColor=white)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
