@@ -1,14 +1,13 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
-
 from fastapi.staticfiles import StaticFiles
-from fastui import prebuilt_html, AnyComponent
 from fastui import components as c
-import uvicorn
+from fastui import prebuilt_html
 
 from src.api import router as api_router
-from src.ui import web_router, fastui_router as fastui_web_router
-
+from src.ui import fastui_router as fastui_web_router
+from src.ui import web_router
 
 c.Page.model_rebuild()
 c.ModelForm.model_rebuild()
@@ -26,10 +25,11 @@ app.mount("/static", StaticFiles(directory="www/static"), name="static")
 def main_rout():
     return RedirectResponse(url="/web/")
 
-@app.get('/web/{path:path}', tags=["fast ui interface"])
+
+@app.get("/web/{path:path}", tags=["fast ui interface"])
 async def html_landing() -> HTMLResponse:
     """Simple HTML page which serves the React app, comes last as it matches all paths."""
-    return HTMLResponse(prebuilt_html(title='classifier web'))
+    return HTMLResponse(prebuilt_html(title="classifier web"))
 
 
 if __name__ == "__main__":

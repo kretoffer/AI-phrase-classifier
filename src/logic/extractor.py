@@ -1,4 +1,5 @@
 import json
+
 import spacy
 
 from src.logic.sinanimizator import sinanimizate
@@ -10,5 +11,8 @@ def extract(project_path: str, intent: str, question: str):
 
     with open(f"{project_path}/sinonimz.json", "r", encoding="utf-8") as f:
         sinonimz = json.load(f)
-    
-    return [{"value": sinanimizate(sinonimz, ent.text), "role": ent.label_} for ent in doc.ents]
+
+    return [
+        {"value": sinanimizate(sinonimz, ent.text), "role": ent.label_}
+        for ent in doc.ents
+    ]

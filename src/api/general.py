@@ -1,62 +1,61 @@
 import os
 import platform
 import subprocess
+
+import yaml
 from fastapi import APIRouter, Form
 from fastapi.responses import FileResponse
 from fastui import FastUI
-import yaml
-
 from fastui import components as c
 from fastui.events import GoToEvent
 
 from config import projects_dir
-
 from src.logic.start_education import start_educate
 from src.shemes import Project
-
 
 router = APIRouter()
 
 open_file_methods = {
     "Windows": lambda path: subprocess.Popen(f'explorrer /select, "{path}"'),
     "Darwin": lambda path: subprocess.run(["open", path]),
-    "Linux": lambda path: subprocess.run(["xdg-open", path])
+    "Linux": lambda path: subprocess.run(["xdg-open", path]),
 }
 
 
-@router.post("/new-project", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
-def new_project(name:str = Form("test", alias="project-name")):
-
+@router.post(
+    "/new-project",
+    response_model=FastUI,
+    response_model_exclude_none=True,
+    tags=["api"],
+)
+def new_project(name: str = Form("test", alias="project-name")):
     if os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "a project with this name already exists"}
-    
+
     os.makedirs(f"{projects_dir}/{name}")
-    
+
     with open(f"{projects_dir}/{name}/config.yaml", "w", encoding="utf-8") as f:
-        project=Project(
-            name=name,
-            status="off",
-            intents=[],
-            entities=[]
-            )
+        project = Project(name=name, status="off", intents=[], entities=[])
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
 
     with open(f"{projects_dir}/{name}/dataset.json", "x", encoding="utf-8") as f:
         f.write('{"hand-data": [], "template-data": []}')
     with open(f"{projects_dir}/{name}/educated.json", "x", encoding="utf-8") as f:
-        f.write('{}')
+        f.write("{}")
     with open(f"{projects_dir}/{name}/sinonimz.json", "x", encoding="utf-8") as f:
-        f.write('{}')
-    
+        f.write("{}")
+
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
+
 
 @router.get("/download-dataset/{name}", tags=["ui api"])
 def download_dataset(name: str):
     return FileResponse(
         path=f"{projects_dir}/{name}/dataset.json",
         filename="dataset.json",
-        media_type="application/json"
+        media_type="application/json",
     )
+
 
 @router.get("/open-project-dir/{name}", tags=["ui api"])
 def open_project_dir(name: str):
@@ -64,7 +63,12 @@ def open_project_dir(name: str):
     return []
 
 
-@router.get("/start_education/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
+@router.get(
+    "/start_education/{name}",
+    response_model=FastUI,
+    response_model_exclude_none=True,
+    tags=["api"],
+)
 def start_education(name):
     start_educate(f"{projects_dir}/{name}")
     return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]

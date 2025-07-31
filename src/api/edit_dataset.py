@@ -2,22 +2,20 @@ import json
 import os
 from typing import Annotated, List
 from uuid import uuid4
+
+import yaml
 from fastapi import APIRouter, Form, UploadFile
 from fastui import FastUI
-import yaml
-import re
-
 from fastui import components as c
 from fastui.events import GoToEvent
 from fastui.forms import FormFile
 
 from config import projects_dir
-
 from src.logic.parse_dataset import parse_dataset
-from src.shemes import Project, UpdateDatasetFormData, DatasetTemplateData
-from src.logic.template_to_hand import template2hand
+from src.shemes import DatasetTemplateData, Project, UpdateDatasetFormData
 
 router = APIRouter()
+
 
 @router.post("/update-dataset/{name}", tags=["api"])
 def update_dataset(name, data: UpdateDatasetFormData):
@@ -26,7 +24,7 @@ def update_dataset(name, data: UpdateDatasetFormData):
 
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
-    
+
     with open(f"{projects_dir}/{name}/sinonimz.json", "r+", encoding="utf-8") as f:
         if file := f.read():
             synonimz = json.loads(file)
@@ -36,7 +34,7 @@ def update_dataset(name, data: UpdateDatasetFormData):
         f.seek(0)
         f.truncate()
         json.dump(synonimz, f, ensure_ascii=False, indent=1)
-    
+
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
 
@@ -55,13 +53,14 @@ def update_dataset(name, data: UpdateDatasetFormData):
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return 
+    return
+
 
 @router.post("/add-template-element/{name}", tags=["api"])
 def update_dataset_template(name, data: DatasetTemplateData):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
-    
+
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
 
@@ -82,15 +81,25 @@ def update_dataset_template(name, data: DatasetTemplateData):
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-@router.post("/update-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
-async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(alias="dataset")):
 
+@router.post(
+    "/update-dataset-file/{name}",
+    response_model=FastUI,
+    response_model_exclude_none=True,
+    tags=["api"],
+)
+async def update_dataset_with_file(
+    name,
+    files: List[Annotated[UploadFile, FormFile(accept="application/json")]] = Form(
+        alias="dataset"
+    ),
+):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
-    
+
     if not files:
         return {"error": "no such files in form"}
-    
+
     data = {}
     for file in files:
         f = await file.read()
@@ -102,7 +111,7 @@ async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormF
         f.seek(0)
         f.truncate()
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
-    
+
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         dataset = json.load(f)
         dataset["hand-data"].extend(data["hand-data"])
@@ -111,15 +120,28 @@ async def update_dataset_with_file(name, files: List[Annotated[UploadFile, FormF
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+    return [
+        c.FireEvent(
+            event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}")
+        )
+    ]
 
 
-@router.post("/replace-dataset-file/{name}", response_model=FastUI, response_model_exclude_none=True, tags=["api"])
-async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(accept="application/json")] = Form(alias="dataset")):
-
+@router.post(
+    "/replace-dataset-file/{name}",
+    response_model=FastUI,
+    response_model_exclude_none=True,
+    tags=["api"],
+)
+async def replace_dataset_with_file(
+    name,
+    file: Annotated[UploadFile, FormFile(accept="application/json")] = Form(
+        alias="dataset"
+    ),
+):
     if not os.path.exists(f"{projects_dir}/{name}"):
         return {"error": "no such project exists"}
-    
+
     dataset = json.loads(await file.read())
     if "hand-data" not in dataset:
         dataset["hand-data"] = []
@@ -131,10 +153,14 @@ async def replace_dataset_with_file(name, file: Annotated[UploadFile, FormFile(a
         f.seek(0)
         f.truncate()
         yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
-    
+
     with open(f"{projects_dir}/{name}/dataset.json", "r+", encoding="utf-8") as f:
         f.seek(0)
         f.truncate()
         json.dump(dataset, f, ensure_ascii=False, indent=1)
 
-    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}"))]
+    return [
+        c.FireEvent(
+            event=GoToEvent(url=f"/web/project/{name}/edit/dataset?u={uuid4()}")
+        )
+    ]

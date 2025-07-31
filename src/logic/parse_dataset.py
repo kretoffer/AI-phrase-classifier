@@ -3,7 +3,6 @@ from typing import List, Tuple
 from src.logic.template_to_hand import get_hand_data
 
 
-
 def parse_dataset(dataset: dict, project) -> Tuple[List[str], List[str]]:
     dataset = dataset.copy()
     dataset = get_hand_data(dataset)

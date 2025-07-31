@@ -143,9 +143,10 @@ Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project (`git clone https://github.com/kretoffer/AI-phrase-classifier.git`)
 2. Create your Feature Branch (`git checkout -b feature/{name of feature}`)
-3. Commit your Changes (`git commit -m 'Add some {name of feature}'`)
-4. Push to the Branch (`git push origin feature/{name of feature}`)
-5. Open a Pull Request
+3. Launch code improver (`./code_improver.sh` for Linux and MacOS or `code_improver.bat` for Windows)
+4. Commit your Changes (`git commit -m 'Add some {name of feature}'`)
+5. Push to the Branch (`git push origin feature/{name of feature}`)
+6. Open a Pull Request
 
 ### Top contributors:
 
