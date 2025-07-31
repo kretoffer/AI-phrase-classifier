@@ -1,0 +1,5 @@
+version: v2.0.1
+title: "Github actions"
+description: |
+  - Added github actions
+  - Added push image to docker hub

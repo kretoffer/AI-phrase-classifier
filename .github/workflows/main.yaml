@@ -2,9 +2,7 @@ name: Main CI
 on:
   push:
     branches:
-      - main
-      - development
-      - releses
+      - releases
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -47,6 +45,10 @@ jobs:
         run: pyright .
   tests:
     runs-on: ubuntu-latest
+    needs:
+      - lint
+      - format
+      - pyright
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,4 +64,95 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+  push-to-main:
+    runs-on: ubuntu-latest
+    needs: 
+      - lint
+      - format
+      - pyright
+      - tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Push to Main
+        run: |
+          git config --global user.name "kretoffer"
+          git config --global user.email "20kretovartem000@gmail.com"
+          git checkout main
+          git merge releases
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - push-to-main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Read release info
+        id: release_info
+        run: |
+          VERSION=$(yq '.version' release.yml)
+          TITLE=$(yq '.title' release.yml)
+          DESCRIPTION=$(yq '.description' release.yml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: changelog
+        env:
+          REPO: ${{ github.repository }}
+
+      - name: Create Release
+        uses: actions/create-release@latest
+        with:
+          tag_name: ${{ steps.release_info.outputs.version }}
+          release_name: ${{ steps.release_info.outputs.title }}
+          body: |
+            ${{ steps.release_info.outputs.description }}
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - push-to-main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+      
+      - name: Read release info
+        id: release_info
+        run: |
+          VERSION=$(yq '.version' release.yml)
+          TITLE=$(yq '.title' release.yml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+            
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.release_info.outputs.version }}
+          labels: ${{ steps.release_info.outputs.title }}
+
     
