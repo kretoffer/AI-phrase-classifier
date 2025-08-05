@@ -1,0 +1,458 @@
+{
+ "hand-data": [
+  {
+   "text": "что такое ника",
+   "classification": "about_entity",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 10,
+     "end": 14
+    }
+   ]
+  },
+  {
+   "text": "что ты знаешь о нике",
+   "classification": "about_entity",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 16,
+     "end": 20
+    }
+   ]
+  },
+  {
+   "text": "какое условие первой лабы",
+   "classification": "about_lab_work_condition",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 14,
+     "end": 25
+    }
+   ]
+  },
+  {
+   "text": "какой бывает машина",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 13,
+     "end": 19
+    }
+   ]
+  },
+  {
+   "text": "какими бывают машины",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 14,
+     "end": 20
+    }
+   ]
+  },
+  {
+   "text": "на что делятся машины",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "что в примере начинается на букву б",
+   "classification": "about_letter_search",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 6,
+     "end": 13
+    }
+   ]
+  },
+  {
+   "text": "что в примере начинается на букву а",
+   "classification": "about_letter_search",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 6,
+     "end": 13
+    }
+   ]
+  },
+  {
+   "text": "что умеет ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 10,
+     "end": 14
+    }
+   ]
+  },
+  {
+   "text": "что умеет делать ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 17,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "что делает ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 11,
+     "end": 15
+    }
+   ]
+  },
+  {
+   "text": "какой машина бывает",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 6,
+     "end": 12
+    }
+   ]
+  },
+  {
+   "text": "на что декомпозируется машина",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 23,
+     "end": 29
+    }
+   ]
+  },
+  {
+   "text": "каким бывает треугольник",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 13,
+     "end": 24
+    }
+   ]
+  },
+  {
+   "text": "на что разбивается предложение",
+   "classification": "subdividing",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 19,
+     "end": 30
+    }
+   ]
+  },
+  {
+   "text": "какая погода в минске",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "какая погода в бресте",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 20
+    }
+   ]
+  },
+  {
+   "text": "какая погода в москве",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "какая температура в минске",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 20,
+     "end": 26
+    }
+   ]
+  },
+  {
+   "text": "погода в минске",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 8,
+     "end": 15
+    }
+   ]
+  },
+  {
+   "text": "какая погода в минске",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "какая погода в минске в беларуси",
+   "classification": "about_weather",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 15,
+     "end": 20
+    },
+    {
+     "entity": "rrel_entity",
+     "start": 24,
+     "end": 32
+    }
+   ]
+  },
+  {
+   "text": "что умеет ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 9,
+     "end": 14
+    }
+   ]
+  },
+  {
+   "text": "что может ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 10,
+     "end": 14
+    }
+   ]
+  },
+  {
+   "text": "что может делать ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 17,
+     "end": 21
+    }
+   ]
+  },
+  {
+   "text": "что делает ника",
+   "classification": "about_skill",
+   "slots": [
+    {
+     "entity": "rrel_entity",
+     "start": 11,
+     "end": 15
+    }
+   ]
+  }
+ ],
+ "template-data": [
+  {
+   "classification": "about_lab_work_deadline",
+   "texts": [
+    "когда можно сдать $rrel_entity",
+    "когда нужно сдать $rrel_entity"
+   ],
+   "entitys": {
+    "rrel_entity": [
+     {
+      "text": "первую лабу",
+      "value": "первая лр"
+     },
+     {
+      "text": "вторую лабу",
+      "value": "вторая лр"
+     },
+     {
+      "text": "третью лабу",
+      "value": "третья лр"
+     },
+     {
+      "text": "четвертую лабу",
+      "value": "четвертая лр"
+     }
+    ]
+   }
+  },
+  {
+   "classification": "about_lab_work_deadline",
+   "texts": [
+    "какой срок сдачи $rrel_entity",
+    "когда защита $rrel_entity",
+    "когда дедлайн $rrel_entity"
+   ],
+   "entitys": {
+    "rrel_entity": [
+     {
+      "text": "первой лабы",
+      "value": "первая лр"
+     },
+     {
+      "text": "второй лабы",
+      "value": "вторая лр"
+     },
+     {
+      "text": "третьей лабы",
+      "value": "третья лр"
+     },
+     {
+      "text": "четвертой лабы",
+      "value": "четвертая лр"
+     }
+    ]
+   }
+  },
+  {
+   "classification": "about_lab_work_condition",
+   "texts": [
+    "что нужно сделать в $rrel_entity",
+    "какое условие в $rrel_entity",
+    "что делать в $rrel_entity"
+   ],
+   "entitys": {
+    "rrel_entity": [
+     {
+      "text": "первой лабе",
+      "value": "первая лр"
+     },
+     {
+      "text": "второй лабе",
+      "value": "вторая лр"
+     },
+     {
+      "text": "третьей лабе",
+      "value": "третья лр"
+     },
+     {
+      "text": "четвертой лабе",
+      "value": "четвертая лр"
+     }
+    ]
+   }
+  },
+  {
+   "classification": "about_entity",
+   "texts": [
+    "что такое $rrel_entity",
+    "расскажи про $rrel_entity",
+    "что $rrel_entity такое"
+   ],
+   "entitys": {
+    "rrel_entity": [
+     {
+      "text": "ника",
+      "value": "Ника"
+     },
+     {
+      "text": "квадрат",
+      "value": "квадрат"
+     },
+     {
+      "text": "круг",
+      "value": "круг"
+     },
+     {
+      "text": "геометрия",
+      "value": "геометрия"
+     },
+     {
+      "text": "остис",
+      "value": "остис"
+     }
+    ]
+   }
+  },
+  {
+   "classification": "color_message",
+   "texts": [
+    "измени цвет $rrel_entity на $rrel_color",
+    "поменяй цвет $rrel_entity на $rrel_color"
+   ],
+   "entitys": {
+    "rrel_entity": [
+     {
+      "text": "футера",
+      "value": "футер"
+     },
+     {
+      "text": "хедера",
+      "value": "хедер"
+     },
+     {
+      "text": "основной части",
+      "value": "основная часть"
+     }
+    ],
+    "rrel_color": [
+     {
+      "text": "565656",
+      "value": "565656"
+     }
+    ]
+   }
+  },
+  {
+   "classification": "greeting",
+   "texts": [
+    "привет",
+    "ппривет",
+    "приветик",
+    "хай",
+    "хей",
+    "йоу",
+    "hello",
+    "hi",
+    "здравствуй",
+    "здравствуйте",
+    "приветствую"
+   ],
+   "entitys": {}
+  }
+ ]
+}

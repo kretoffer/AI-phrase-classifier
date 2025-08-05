@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastui import components as c
-from fastui import prebuilt_html
+from fastui import prebuilt_html, AnyComponent
 
 from src.api import router as api_router
 from src.ui import fastui_router as fastui_web_router

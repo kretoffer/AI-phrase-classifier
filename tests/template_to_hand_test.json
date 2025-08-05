@@ -1,0 +1,32 @@
+{
+    "template" : {
+        "classification": "color_message",
+        "texts": [
+            "измени цвет $rrel_entity на $rrel_color",
+            "поменяй цвет $rrel_entity на $rrel_color"
+        ],
+        "entitys": {
+            "rrel_entity": [
+                {
+                    "text": "футера",
+                    "value": "футер"
+                },
+                {
+                    "text": "хедера",
+                    "value": "хедер"
+                },
+                {
+                    "text": "основной части",
+                    "value": "основная часть"
+                }
+            ],
+            "rrel_color": [
+                {
+                    "text": "565656",
+                    "value": "565656"
+                }
+            ]
+        }
+    },
+    "result": [{"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 12, "end": 18}, {"entity": "rrel_color", "start": 22, "end": 28}], "text": "измени цвет футера на 565656"}, {"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 12, "end": 18}, {"entity": "rrel_color", "start": 22, "end": 28}], "text": "измени цвет хедера на 565656"}, {"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 12, "end": 26}, {"entity": "rrel_color", "start": 30, "end": 36}], "text": "измени цвет основной части на 565656"}, {"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 13, "end": 19}, {"entity": "rrel_color", "start": 23, "end": 29}], "text": "поменяй цвет футера на 565656"}, {"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 13, "end": 19}, {"entity": "rrel_color", "start": 23, "end": 29}], "text": "поменяй цвет хедера на 565656"}, {"classification": "color_message", "slots": [{"entity": "rrel_entity", "start": 13, "end": 27}, {"entity": "rrel_color", "start": 31, "end": 37}], "text": "поменяй цвет основной части на 565656"}]
+}
