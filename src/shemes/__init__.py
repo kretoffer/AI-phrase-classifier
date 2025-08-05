@@ -52,7 +52,7 @@ class UpdateDatasetFormData(BaseModel):
         for el in self.slots:
             synonim = self.text[el.start : el.end]
             if synonim != el.value:
-                new_synonimz[synonim] = el.value
+                new_synonimz[re.sub(r"[^\w\s]", "", synonim.lower(), flags=re.UNICODE)] = el.value
         return dataset_data, new_synonimz
 
 
