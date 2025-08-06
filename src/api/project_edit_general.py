@@ -12,30 +12,8 @@ from fastui.forms import fastui_form
 
 from config import projects_dir
 from src.shemes import Project
-from src.shemes.ui_forms import EditForm
 
 router = APIRouter()
-
-
-@router.post(
-    "/update-project/{name}",
-    response_model=FastUI,
-    response_model_exclude_none=True,
-    tags=["api"],
-)
-def update_project(name: str, form: Annotated[EditForm, fastui_form(EditForm)]):  # type: ignore
-    if not os.path.exists(f"{projects_dir}/{name}"):
-        return {"error": "no such project exists"}
-
-    with open(f"{projects_dir}/{name}/config.yaml", "r+", encoding="utf-8") as f:
-        project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
-        project = project.model_copy(update=form.model_dump())
-        f.seek(0)
-        f.truncate()
-        yaml.dump(project.model_dump(), f, allow_unicode=True, sort_keys=False)
-
-    return [c.FireEvent(event=GoToEvent(url=f"/web/project/{name}"))]
-
 
 @router.post(
     "/delete-project/{name}",
@@ -89,10 +67,14 @@ def add_intent_or_entity(
 
 @router.get("/{project_name}/delete-intent/{intent}", tags=["api"])
 def delete_intent(project_name: str, intent: str):
+    if not os.path.exists(f"{projects_dir}/{project_name}"):
+        return {"error": "no such project exists"}
     with open(
         f"{projects_dir}/{project_name}/config.yaml", "r+", encoding="utf-8"
     ) as f:
         project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        if intent not in project.intents:
+            return {"error": "no such intent in this project"}
         project.intents.remove(intent)
 
         f.seek(0)
@@ -104,10 +86,14 @@ def delete_intent(project_name: str, intent: str):
 
 @router.get("/{project_name}/delete-entity/{entity}", tags=["api"])
 def delete_entity(project_name: str, entity: str):
+    if not os.path.exists(f"{projects_dir}/{project_name}"):
+        return {"error": "no such project exists"}
     with open(
         f"{projects_dir}/{project_name}/config.yaml", "r+", encoding="utf-8"
     ) as f:
         project = Project.model_validate(yaml.load(f, Loader=yaml.SafeLoader))
+        if entity not in project.entities:
+            return {"error": "no such entity in this project"}
         project.entities.remove(entity)
 
         f.seek(0)

@@ -6,7 +6,7 @@
 [![Issues][issues-shield]][issues-url]
 [![Unlicense License][license-shield]][license-url]
 [![Codecov][codecov-shield]][actions-url]
-[![Tests][tests-shield]][actions-url]
+[![Release][tests-shield]][actions-url]
 
 
 
@@ -167,5 +167,5 @@ Don't forget to give the project a star! Thanks again!
 [license-shield]: https://img.shields.io/github/license/kretoffer/AI-phrase-classifier.svg?style=flat
 [license-url]: https://github.com/kretoffer/AI-phrase-classifier/blob/master/LICENSE
 [codecov-shield]: https://codecov.io/gh/kretoffer/AI-phrase-classifier/branch/main/graph/badge.svg
-[actions-url]: https://github.com/kretoffer/AI-phrase-classifier/actions
-[tests-shield]: https://github.com/kretoffer/AI-phrase-classifier/workflows/main/badge.svg
+[actions-url]: https://github.com/kretoffer/AI-phrase-classifier/actions/workflows/release.yaml
+[tests-shield]: https://github.com/kretoffer/AI-phrase-classifier/actions/workflows/release.yaml/badge.svg?branch=releases
